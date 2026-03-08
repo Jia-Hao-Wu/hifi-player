@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --color-foreground: #11181C;
+    --color-background: #fff;
+    --color-tint: #0a7ea4;
+    --color-icon: #687076;
+    --color-player-surface: #f2f2f7;
+    --color-player-border: #d1d1d6;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-foreground: #ECEDEE;
+      --color-background: #151718;
+      --color-tint: #fff;
+      --color-icon: #9BA1A6;
+      --color-player-surface: #1c1c1e;
+      --color-player-border: #2c2c2e;
+    }
+  }
+}
