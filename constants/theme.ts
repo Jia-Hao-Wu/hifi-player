@@ -8,7 +8,7 @@ import { Platform } from "react-native";
 const tintColorLight = "#0a7ea4";
 const tintColorDark = "#fff";
 
-export const Colors = {
+const Colors = {
 	light: {
 		text: "#11181C",
 		background: "#fff",
@@ -27,7 +27,7 @@ export const Colors = {
 	},
 };
 
-export const Fonts = Platform.select({
+const Fonts = Platform.select({
 	ios: {
 		/** iOS `UIFontDescriptorSystemDesignDefault` */
 		sans: "system-ui",
@@ -52,3 +52,5 @@ export const Fonts = Platform.select({
 		mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
 	},
 });
+
+export { Colors, Fonts };

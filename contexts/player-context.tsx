@@ -8,14 +8,17 @@ import React, {
 	useState,
 } from "react";
 
-import { Track, TRACKS } from "@/constants/tracks";
+import { getTrackStream } from "@/api";
+import { Track } from "@/constants/tracks";
 
 interface PlayerContextType {
 	currentTrack: Track | null;
 	isPlaying: boolean;
+	isLoading: boolean;
 	position: number;
 	duration: number;
 	queue: Track[];
+	setQueue: (tracks: Track[]) => void;
 	play: () => Promise<void>;
 	pause: () => Promise<void>;
 	next: () => Promise<void>;
@@ -27,9 +30,10 @@ interface PlayerContextType {
 const PlayerContext = createContext<PlayerContextType | null>(null);
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
-	const [queue] = useState<Track[]>(TRACKS);
+	const [queue, setQueue] = useState<Track[]>([]);
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [isPlaying, setIsPlaying] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 	const [position, setPosition] = useState(0);
 	const [duration, setDuration] = useState(0);
 
@@ -91,9 +95,27 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 			setPosition(0);
 			setDuration(0);
 
+			const track = queue[index];
+			let streamUri = track.uri;
+
+			if (!streamUri && track.tidalId) {
+				setIsLoading(true);
+				try {
+					streamUri = await getTrackStream(track.tidalId);
+				} catch (e) {
+					setIsLoading(false);
+					return;
+				}
+			}
+
+			if (!streamUri) {
+				setIsLoading(false);
+				return;
+			}
+
 			try {
 				const { sound } = await Audio.Sound.createAsync(
-					{ uri: queue[index].uri },
+					{ uri: streamUri },
 					{ shouldPlay: autoPlay },
 					onPlaybackStatusUpdate,
 				);
@@ -106,6 +128,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				}
 			} catch (e) {
 				console.warn("Failed to load audio:", e);
+			} finally {
+				setIsLoading(false);
 			}
 		},
 		[queue, onPlaybackStatusUpdate],
@@ -136,6 +160,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	}, [position, queue.length, loadSoundAt]);
 
 	const seek = useCallback(async (positionSeconds: number) => {
+		if (!Number.isFinite(positionSeconds) || positionSeconds < 0) return;
 		await soundRef.current?.setPositionAsync(positionSeconds * 1000);
 	}, []);
 
@@ -154,9 +179,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 			value={{
 				currentTrack: queue[currentIndex] ?? null,
 				isPlaying,
+				isLoading,
 				position,
 				duration,
 				queue,
+				setQueue,
 				play,
 				pause,
 				next,
