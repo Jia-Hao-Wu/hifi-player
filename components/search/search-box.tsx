@@ -1,13 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColorScheme } from "@/hooks/use-color-scheme.web";
-
-import { Colors } from "@/constants/theme";
 
 export function Searchbox({ ...props }: React.ComponentPropsWithoutRef<"input">) {
-	const colorScheme = useColorScheme();
-
-	const iconColor = Colors[colorScheme].tint;
-
 	return (
 		<div className="relative">
 			<input
@@ -18,7 +11,7 @@ export function Searchbox({ ...props }: React.ComponentPropsWithoutRef<"input">)
 				className="absolute right-3 top-1/2 transform -translate-y-1/2 opacity-25"
 				size={28}
 				name="magnifyingglass"
-				color={iconColor}
+				color="var(--color-foreground)"
 			/>
 		</div>
 	);

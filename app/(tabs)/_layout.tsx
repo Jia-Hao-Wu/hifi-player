@@ -1,21 +1,16 @@
 import { BottomTabBar } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
-import React from "react";
 import { View } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { PlayerControls } from "@/components/player-ui/player-controls";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function TabLayout() {
-	const colorScheme = useColorScheme();
-
 	return (
 		<Tabs
 			screenOptions={{
-				tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+				tabBarActiveTintColor: "var(--color-foreground)",
 				headerShown: false,
 				tabBarButton: HapticTab,
 			}}

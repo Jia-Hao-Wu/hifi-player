@@ -8,8 +8,7 @@ module.exports = {
 			colors: {
 				foreground: "var(--color-foreground)",
 				background: "var(--color-background)",
-				tint: "var(--color-tint)",
-				icon: "var(--color-icon)",
+				muted: "var(--color-muted)",
 				"player-surface": "var(--color-player-surface)",
 				"player-border": "var(--color-player-border)",
 			},

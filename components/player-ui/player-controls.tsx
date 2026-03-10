@@ -9,9 +9,7 @@ import {
 } from "react-native";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
 import { usePlayer } from "@/contexts/player-context";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { MinMax } from "@/utils";
 
 export function PlayerControls() {
@@ -27,8 +25,6 @@ export function PlayerControls() {
 		previous,
 		seek,
 	} = usePlayer();
-	const colorScheme = useColorScheme() ?? "light";
-	const { icon: iconColor, text: textColor, tint: tintColor } = Colors[colorScheme];
 
 	const [barWidth, setBarWidth] = useState(0);
 	const [isScrubbing, setIsScrubbing] = useState(false);
@@ -93,24 +89,20 @@ export function PlayerControls() {
 				style={{ height: 20, justifyContent: "center" }}
 				{...panResponder.panHandlers}
 			>
-				<View className="h-[3px] overflow-hidden rounded-[2px] bg-gray-500/20">
+				<View className="h-[3px] overflow-hidden rounded-[2px] bg-foreground/20">
 					<View
-						className="h-full rounded-[2px]"
-						style={{
-							width: `${displayProgress * 100}%`,
-							backgroundColor: tintColor,
-						}}
+						className="h-full rounded-[2px] bg-foreground"
+						style={{ width: `${displayProgress * 100}%` }}
 					/>
 				</View>
 
 				{barWidth > 0 && (
 					<View
-						className="absolute"
+						className="absolute bg-foreground"
 						style={{
 							width: dotSize,
 							height: dotSize,
 							borderRadius: dotSize / 2,
-							backgroundColor: tintColor,
 							left: displayProgress * barWidth - dotSize / 2,
 							top: (20 - dotSize) / 2,
 						}}
@@ -131,12 +123,12 @@ export function PlayerControls() {
 					>
 						{currentTrack.title}
 					</Text>
-					<Text className="text-xs text-icon" numberOfLines={1}>
+					<Text className="text-xs text-muted" numberOfLines={1}>
 						{currentTrack.artist}
 					</Text>
 				</View>
 
-				<Text className="text-[11px] text-icon">
+				<Text className="text-[11px] text-muted">
 					{`${formatTime(displayPosition)} / ${formatTime(duration)}`}
 				</Text>
 
@@ -145,21 +137,21 @@ export function PlayerControls() {
 						onPress={previous}
 						hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
 					>
-						<IconSymbol name="backward.fill" size={18} color={textColor} />
+						<IconSymbol name="backward.fill" size={18} color="var(--color-foreground)" />
 					</TouchableOpacity>
 
 					<TouchableOpacity
 						onPress={isPlaying ? pause : play}
 						disabled={isLoading}
-						className="h-9 w-9 items-center justify-center rounded-full bg-tint"
+						className="h-9 w-9 items-center justify-center rounded-full bg-foreground"
 					>
 						{isLoading ? (
-							<ActivityIndicator size="small" color={iconColor} />
+							<ActivityIndicator size="small" color="var(--color-background)" />
 						) : (
 							<IconSymbol
 								name={isPlaying ? "pause.fill" : "play.fill"}
 								size={20}
-								color={iconColor}
+								color="var(--color-background)"
 							/>
 						)}
 					</TouchableOpacity>
@@ -168,7 +160,7 @@ export function PlayerControls() {
 						onPress={next}
 						hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
 					>
-						<IconSymbol name="forward.fill" size={18} color={textColor} />
+						<IconSymbol name="forward.fill" size={18} color="var(--color-foreground)" />
 					</TouchableOpacity>
 				</View>
 			</View>
