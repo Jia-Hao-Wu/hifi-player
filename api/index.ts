@@ -6,44 +6,39 @@
  */
 
 // Images
-export { artworkUrl, ARTWORK_SIZES } from './images';
-export type { ArtworkSize } from './images';
+export { ARTWORK_SIZES, artworkUrl } from "./images";
+export type { ArtworkSize } from "./images";
 
 // Search
-export {
-  searchTracks,
-  searchAlbums,
-  searchArtists,
-  searchPlaylists,
-} from './search';
+export { searchAlbums, searchArtists, searchPlaylists, searchTracks } from "./search";
 export type {
-  SearchTrack,
-  SearchAlbum,
-  SearchArtist,
-  SearchPlaylist,
-  SearchPage,
-  SearchOptions,
-} from './search';
+	SearchAlbum,
+	SearchArtist,
+	SearchOptions,
+	SearchPage,
+	SearchPlaylist,
+	SearchTrack
+} from "./search";
 
 // Stream resolution
-export { getTrackStream, resolveStreamUrl } from './track';
-export type { StreamQuality } from './track';
+export { getTrackStream, resolveStreamUrl } from "./track";
+export type { StreamQuality } from "./track";
 
 // Full-detail metadata
 export {
-  getTrackInfo,
-  getAlbumDetail,
-  getArtistDetail,
-  getRecommendations,
-} from './metadata';
+	getAlbumDetail,
+	getArtistDetail,
+	getRecommendations,
+	getTrackInfo
+} from "./metadata";
 export type {
-  TrackInfo,
-  AlbumDetail,
-  ArtistDetail,
-  ArtistMeta,
-  AlbumMeta,
-  Recommendation,
-} from './metadata';
+	AlbumDetail,
+	AlbumMeta,
+	ArtistDetail,
+	ArtistMeta,
+	Recommendation,
+	TrackInfo
+} from "./metadata";
 
 // Error type
-export { ApiError } from './client';
+export { ApiError } from "./client";
