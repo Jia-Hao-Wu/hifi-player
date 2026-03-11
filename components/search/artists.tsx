@@ -1,14 +1,20 @@
 import { useSearchArtists } from "@/hooks/use-search";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 type ArtistsProps = {
 	query: string;
 };
 
 export function Artists({ query }: ArtistsProps) {
+	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+		useSearchArtists(query);
 
-	const { data, isLoading } = useSearchArtists(query);
+	const sentinelRef = useInfiniteScroll(
+		() => fetchNextPage(),
+		!!hasNextPage && !isFetchingNextPage,
+	);
 
-	if(isLoading || !data) {
+	if (isLoading || !data) {
 		return <div>Loading...</div>;
 	}
 
@@ -21,6 +27,8 @@ export function Artists({ query }: ArtistsProps) {
 					</div>
 				</div>
 			))}
+			<div ref={sentinelRef} className="h-1" />
+			{isFetchingNextPage && <div className="text-center text-xs text-muted py-2">Loading more...</div>}
 		</div>
 	);
 }

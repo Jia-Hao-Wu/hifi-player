@@ -1,6 +1,7 @@
 import { ARTWORK_SIZES, artworkUrl } from "@/api/images";
 import { usePlayer } from "@/contexts/player-context";
 import { useSearchTracks } from "@/hooks/use-search";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getTrackStream } from "@/api/track";
 
@@ -9,8 +10,14 @@ type TracksProps = {
 };
 
 export function Tracks({ query }: TracksProps) {
-	const { data, isLoading } = useSearchTracks(query);
+	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+		useSearchTracks(query);
 	const { currentTrack, isPlaying, enQueue } = usePlayer();
+
+	const sentinelRef = useInfiniteScroll(
+		() => fetchNextPage(),
+		!!hasNextPage && !isFetchingNextPage,
+	);
 
 	if (isLoading || !data) {
 		return <div>Loading...</div>;
@@ -62,6 +69,8 @@ export function Tracks({ query }: TracksProps) {
 					</div>
 				</div>
 			))}
+			<div ref={sentinelRef} className="h-1" />
+			{isFetchingNextPage && <div className="text-center text-xs text-muted py-2">Loading more...</div>}
 		</div>
 	);
 }

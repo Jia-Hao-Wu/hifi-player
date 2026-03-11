@@ -1,14 +1,20 @@
 import { useSearchPlaylists } from "@/hooks/use-search";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 type PlaylistsProps = {
 	query: string;
 };
 
 export function Playlists({ query }: PlaylistsProps) {
+	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+		useSearchPlaylists(query);
 
-	const { data, isLoading } = useSearchPlaylists(query);
+	const sentinelRef = useInfiniteScroll(
+		() => fetchNextPage(),
+		!!hasNextPage && !isFetchingNextPage,
+	);
 
-	if(isLoading || !data) {
+	if (isLoading || !data) {
 		return <div>Loading...</div>;
 	}
 
@@ -22,6 +28,8 @@ export function Playlists({ query }: PlaylistsProps) {
 					</div>
 				</div>
 			))}
+			<div ref={sentinelRef} className="h-1" />
+			{isFetchingNextPage && <div className="text-center text-xs text-muted py-2">Loading more...</div>}
 		</div>
 	);
 }
