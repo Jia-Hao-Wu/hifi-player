@@ -1,4 +1,5 @@
 import { apiGet } from "./client";
+import { SearchResponse } from "./search";
 
 export type StreamQuality = "HI_RES_LOSSLESS" | "HI_RES" | "LOSSLESS" | "HIGH" | "LOW";
 
@@ -11,10 +12,17 @@ const QUALITY_FALLBACK: StreamQuality[] = [
 ];
 
 interface TrackStreamResponse {
-	manifest?: string;
-	OriginalTrackUrl?: string;
-	duration?: number;
+	manifest: string;
+	manifestHash: string;
+	trackId: number;
+	audioMode: string;
+	audioQuality: string;
+	assetPresentation: string;
+	manifestMimeType: string;
 	trackReplayGain?: number;
+	trackPeakAmplitude: number;
+	albumReplayGain: number;
+	albumPeakAmplitude: number;
 }
 
 interface JsonManifest {
@@ -28,8 +36,7 @@ interface JsonManifest {
  * Attempt to extract a direct stream URL from a base64-encoded manifest.
  * Returns `null` if the manifest is a DASH XML (not usable in React Native).
  */
-export function resolveStreamUrl(manifest: string, originalUrl?: string): string | null {
-	if (originalUrl) return originalUrl;
+export function resolveStreamUrl(manifest: string): string | null {
 
 	let decoded: string;
 	try {
@@ -66,9 +73,12 @@ export async function getTrackStream(
 
 	for (const q of qualitiesToTry) {
 		const qs = new URLSearchParams({ id, quality: q });
-		const data = await apiGet<TrackStreamResponse>(`/track/?${qs}`, signal);
+		const { data } = await apiGet<SearchResponse<TrackStreamResponse>>(`/track/?${qs}`, signal);
 
-		const url = resolveStreamUrl(data.manifest ?? "", data.OriginalTrackUrl);
+		const url = resolveStreamUrl(data.manifest ?? "");
+
+		console.log(url);
+
 		if (url) return url;
 	}
 

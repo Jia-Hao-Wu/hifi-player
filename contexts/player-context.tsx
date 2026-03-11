@@ -1,4 +1,9 @@
-import { Audio, AVPlaybackStatus } from "expo-av";
+import {
+	useAudioPlayer,
+	useAudioPlayerStatus,
+	setAudioModeAsync,
+} from "expo-audio";
+
 import React, {
 	createContext,
 	useCallback,
@@ -10,7 +15,6 @@ import React, {
 
 import { getTrackStream } from "@/api";
 import { Track } from "@/constants/tracks";
-import { useQueue } from "@/hooks/use-queue";
 
 interface PlayerContextType {
 	currentTrack: Track | null;
@@ -34,73 +38,35 @@ const PlayerContext = createContext<PlayerContextType | null>(null);
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	const [queue, setQueue] = useState<Track[]>([]);
 	const [currentIndex, setCurrentIndex] = useState(0);
-	const [isPlaying, setIsPlaying] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
-	const [position, setPosition] = useState(0);
-	const [duration, setDuration] = useState(0);
 
-	const soundRef = useRef<Audio.Sound | null>(null);
+	const player = useAudioPlayer(null);
+	const status = useAudioPlayerStatus(player);
+
 	const isPlayingRef = useRef(false);
 	const currentIndexRef = useRef(0);
 
 	useEffect(() => {
-		isPlayingRef.current = isPlaying;
-	}, [isPlaying]);
+		isPlayingRef.current = status.playing;
+	}, [status.playing]);
 
 	useEffect(() => {
 		currentIndexRef.current = currentIndex;
 	}, [currentIndex]);
 
 	useEffect(() => {
-		Audio.setAudioModeAsync({
-			allowsRecordingIOS: false,
-			staysActiveInBackground: true,
-			playsInSilentModeIOS: true,
-			shouldDuckAndroid: true,
+		setAudioModeAsync({
+			playsInSilentMode: true,
+			interruptionMode: "duckOthers",
 		});
-	}, []);
-
-	useEffect(() => {
-		if (queue.length > 0) {
-			loadSoundAt(0, false);
-		}
-		return () => {
-			soundRef.current?.unloadAsync();
-		};
 	}, []);
 
 	const enQueue = (track: Track) => {
 		setQueue((prev) => [...prev, track]);
 	};
 
-	const onPlaybackStatusUpdate = useCallback(
-		(status: AVPlaybackStatus) => {
-			if (!status.isLoaded) return;
-			setPosition((status.positionMillis ?? 0) / 1000);
-			if (Number.isFinite(status.durationMillis)) {
-				setDuration((status.durationMillis as number) / 1000);
-			}
-			setIsPlaying(status.isPlaying);
-
-			if (status.didJustFinish) {
-				const nextIndex = (currentIndexRef.current + 1) % queue.length;
-				setCurrentIndex(nextIndex);
-				loadSoundAt(nextIndex, true);
-			}
-		},
-		[queue.length],
-	);
-
 	const loadSoundAt = useCallback(
 		async (index: number, autoPlay = false) => {
-			if (soundRef.current) {
-				await soundRef.current.unloadAsync();
-				soundRef.current = null;
-			}
-
-			setPosition(0);
-			setDuration(0);
-
 			const track = queue[index];
 			let streamUri = track.uri;
 
@@ -120,17 +86,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 			}
 
 			try {
-				const { sound } = await Audio.Sound.createAsync(
-					{ uri: streamUri },
-					{ shouldPlay: autoPlay },
-					onPlaybackStatusUpdate,
-				);
-
-				soundRef.current = sound;
-
-				const status = await sound.getStatusAsync();
-				if (status.isLoaded && Number.isFinite(status.durationMillis)) {
-					setDuration((status.durationMillis as number) / 1000);
+				player.replace({ uri: streamUri });
+				if (autoPlay) {
+					player.play();
 				}
 			} catch (e) {
 				console.warn("Failed to load audio:", e);
@@ -138,16 +96,38 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				setIsLoading(false);
 			}
 		},
-		[queue, onPlaybackStatusUpdate],
+		[queue, player],
 	);
 
-	const play = useCallback(async () => {
-		await soundRef.current?.playAsync();
+	// Auto-advance when track finishes
+	useEffect(() => {
+		const subscription = player.addListener(
+			"playbackStatusUpdate",
+			(s) => {
+				if (s.playbackState === "ended" && queue.length > 0) {
+					const nextIndex =
+						(currentIndexRef.current + 1) % queue.length;
+					setCurrentIndex(nextIndex);
+					loadSoundAt(nextIndex, true);
+				}
+			},
+		);
+		return () => subscription.remove();
+	}, [player, queue.length, loadSoundAt]);
+
+	useEffect(() => {
+		if (queue.length > 0) {
+			loadSoundAt(0, false);
+		}
 	}, []);
 
+	const play = useCallback(async () => {
+		player.play();
+	}, [player]);
+
 	const pause = useCallback(async () => {
-		await soundRef.current?.pauseAsync();
-	}, []);
+		player.pause();
+	}, [player]);
 
 	const next = useCallback(async () => {
 		const nextIndex = (currentIndexRef.current + 1) % queue.length;
@@ -156,19 +136,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	}, [queue.length, loadSoundAt]);
 
 	const previous = useCallback(async () => {
-		if (position > 3) {
-			await soundRef.current?.setPositionAsync(0);
+		if (status.currentTime > 3) {
+			player.seekTo(0);
 			return;
 		}
-		const prevIndex = (currentIndexRef.current - 1 + queue.length) % queue.length;
+		const prevIndex =
+			(currentIndexRef.current - 1 + queue.length) % queue.length;
 		setCurrentIndex(prevIndex);
 		await loadSoundAt(prevIndex, isPlayingRef.current);
-	}, [position, queue.length, loadSoundAt]);
+	}, [status.currentTime, queue.length, loadSoundAt, player]);
 
-	const seek = useCallback(async (positionSeconds: number) => {
-		if (!Number.isFinite(positionSeconds) || positionSeconds < 0) return;
-		await soundRef.current?.setPositionAsync(positionSeconds * 1000);
-	}, []);
+	const seek = useCallback(
+		async (positionSeconds: number) => {
+			if (!Number.isFinite(positionSeconds) || positionSeconds < 0)
+				return;
+			player.seekTo(positionSeconds);
+		},
+		[player],
+	);
 
 	const loadTrack = useCallback(
 		async (track: Track) => {
@@ -184,10 +169,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		<PlayerContext.Provider
 			value={{
 				currentTrack: queue[currentIndex] ?? null,
-				isPlaying,
+				isPlaying: status.playing,
 				isLoading,
-				position,
-				duration,
+				position: status.currentTime,
+				duration: status.duration,
 				queue,
 				setQueue,
 				play,
@@ -196,7 +181,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				previous,
 				seek,
 				loadTrack,
-				enQueue
+				enQueue,
 			}}
 		>
 			{children}
