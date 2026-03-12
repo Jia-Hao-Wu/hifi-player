@@ -13,16 +13,43 @@ export interface SearchArtist {
 }
 
 export interface SearchCreator {
-	id: number,
-	name: string,
+	id: number;
+	name: string;
 }
 
 export interface SearchAlbum {
-	id: string;
+	id: number;
 	title: string;
-	cover: string | null;
-	releaseDate?: string;
-	artists: SearchArtist[];
+	duration: number;
+	streamReady: boolean;
+	payToStream: boolean;
+	adSupportedStreamReady: boolean;
+	djReady: boolean;
+	stemReady: boolean;
+	streamStartDate: string;
+	allowStreaming: boolean;
+	premiumStreamingOnly: boolean;
+	numberOfTracks: number;
+	numberOfVideos: number;
+	numberOfVolumes: number;
+	releaseDate: string;
+	copyright: string;
+	type: string;
+	version?: string;
+	url: string;
+	cover: string;
+	vibrantColor: string;
+	videoCover?: string;
+	explicit: boolean;
+	upc: string;
+	popularity: number;
+	audioQuality: string;
+	audioModes: string[];
+	mediaMetadata: {
+		tags: string[];
+	};
+	upload: boolean;
+	artists: SearchArtist[]
 }
 
 export interface SearchTrack {
@@ -39,8 +66,8 @@ export interface SearchPlaylist {
 	uuid: string;
 	title: string;
 	numberOfTracks: number;
-	numberOfVideos:number;
-	creator: SearchCreator
+	numberOfVideos: number;
+	creator: SearchCreator;
 	description: string;
 	duration: number;
 	lastUpdated: string;
@@ -52,7 +79,7 @@ export interface SearchPlaylist {
 	popularity: number;
 	squareImage: string;
 	customImageUrl?: string;
-	promotedArtists: SearchArtist[]
+	promotedArtists: SearchArtist[];
 	lastItemAddedAt: string;
 }
 

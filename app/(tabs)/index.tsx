@@ -30,12 +30,12 @@ export default function HomeScreen() {
 							content: <Tracks query={query} />,
 						},
 						{
-							label: "Playlists",
-							content: <Playlists query={query} />,
-						},
-						{
 							label: "Artists",
 							content: <Artists query={query} />,
+						},
+						{
+							label: "Playlists",
+							content: <Playlists query={query} />,
 						},
 						{
 							label: "Albums",

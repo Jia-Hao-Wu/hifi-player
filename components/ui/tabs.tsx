@@ -15,7 +15,7 @@ export function Tabs({ tabs, defaultIndex = 0 }: TabsProps) {
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
-			<div className="flex gap-1 border-b border-foreground/10">
+			<div className="flex gap-1 border-b border-foreground/10 justify-evenly">
 				{tabs.map((tab, index) => (
 					<button
 						key={tab.label}
