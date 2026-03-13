@@ -1,13 +1,12 @@
-import { useState } from "react";
+ import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { getArtistDetail, getTrackStream } from "@/api";
+import { getArtistDetail } from "@/api";
 import { ARTWORK_SIZES, artworkUrl } from "@/api/images";
-import { usePlayer } from "@/contexts/player-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Tabs } from "@/components/ui/tabs";
 import { getArtistTracks, getSimilarArtists } from "@/api/metadata";
-
-type Tab = "tracks" | "albums";
+import { Track } from "@/components/player-ui/track";
 
 const INITIAL_TRACKS = 5;
 const INITIAL_ALBUMS = 4;
@@ -15,8 +14,6 @@ const INITIAL_ALBUMS = 4;
 export default function ArtistPage() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const router = useRouter();
-	const { enQueue } = usePlayer();
-	const [activeTab, setActiveTab] = useState<Tab>("tracks");
 	const [showAllTracks, setShowAllTracks] = useState(false);
 	const [showAllAlbums, setShowAllAlbums] = useState(false);
 
@@ -70,101 +67,67 @@ export default function ArtistPage() {
 				</div>
 			</div>
 
-			<div className="flex border-b border-white/10 px-4">
-				{(["tracks", "albums"] as const).map((tab) => (
-					<button
-						key={tab}
-						onClick={() => setActiveTab(tab)}
-						className={`flex-1 py-2 text-xs font-medium uppercase text-center transition-colors ${
-							activeTab === tab
-								? "text-foreground border-b-2 border-foreground"
-								: "text-muted"
-						}`}
-					>
-						{tab === "tracks" ? `Tracks (${tracks.length})` : `Albums (${albums.length})`}
-					</button>
-				))}
-			</div>
-
-			{activeTab === "tracks" && tracks.length > 0 && (
-				<div>
-					<div className="flex flex-col">
-						{visibleTracks.map((track, index) => (
-							<div
-								key={track.id}
-								className="group flex items-center gap-3 py-2 px-4 hover:bg-white/10 cursor-pointer"
-								onClick={async () => {
-									enQueue({
-										id: track.id,
-										title: track.title,
-										artist: track.artist,
-										album: track.album?.title,
-										artwork: artworkUrl(track.album?.cover, ARTWORK_SIZES.thumbnail),
-										uri: await getTrackStream(track.id),
-										tidalId: track.id,
-										duration: track.duration,
-									});
-								}}
-							>
-								<span className="w-6 text-xs text-muted text-right">{index + 1}</span>
-								<div className="flex-1 min-w-0">
-									<div className="text-sm text-foreground truncate">{track.title}</div>
-									<div className="text-xs text-muted truncate">{track.album?.title}</div>
-								</div>
-								<div className="text-xs text-muted">
-									{Math.floor(track.duration / 60)}:
-									{(track.duration % 60).toString().padStart(2, "0")}
-								</div>
+			<Tabs tabs={[
+				{
+					label: `Tracks (${tracks.length})`,
+					content: tracks.length > 0 && (
+						<div>
+							<div className="flex flex-col">
+								{visibleTracks.map((track, index) => (
+									<Track key={track.id} track={track} index={index} />
+								))}
 							</div>
-						))}
-					</div>
-					{tracks.length > INITIAL_TRACKS && (
-						<button
-							onClick={() => setShowAllTracks((v) => !v)}
-							className="w-full py-2 text-xs text-muted hover:text-foreground transition-colors"
-						>
-							{showAllTracks ? "Show Less" : `Show More (${tracks.length - INITIAL_TRACKS} more)`}
-						</button>
-					)}
-				</div>
-			)}
-
-			{activeTab === "albums" && albums.length > 0 && (
-				<div>
-					<div className="grid grid-cols-2 gap-2 p-4">
-						{visibleAlbums.map((album) => (
-							<div
-								key={album.id}
-								className="group flex flex-col items-start gap-2 p-2 bg-orange-950/50 rounded-sm overflow-visible cursor-pointer"
-								onClick={() => router.push(`/album/${album.id}`)}
-							>
-								<div className="flex rounded-md overflow-visible relative">
-									<img
-										src={artworkUrl(album.cover, ARTWORK_SIZES.medium)}
-										className="rounded-md object-contain"
-									/>
-								</div>
-								<div className="min-w-0 w-full">
-									<div className="text-xs text-foreground truncate">{album.title}</div>
-									{album.releaseDate && (
-										<div className="text-[0.6rem] text-muted">
-											{album.releaseDate.slice(0, 4)}
+							{tracks.length > INITIAL_TRACKS && (
+								<button
+									onClick={() => setShowAllTracks((v) => !v)}
+									className="w-full py-2 text-xs text-muted hover:text-foreground transition-colors"
+								>
+									{showAllTracks ? "Show Less" : `Show More (${tracks.length - INITIAL_TRACKS} more)`}
+								</button>
+							)}
+						</div>
+					),
+				},
+				{
+					label: `Albums (${albums.length})`,
+					content: albums.length > 0 && (
+						<div>
+							<div className="grid grid-cols-2 gap-2 px-4">
+								{visibleAlbums.map((album) => (
+									<div
+										key={album.id}
+										className="group flex flex-col items-start gap-2 p-2 bg-orange-950/50 rounded-sm overflow-visible cursor-pointer"
+										onClick={() => router.push(`/album/${album.id}`)}
+									>
+										<div className="flex rounded-md overflow-visible relative">
+											<img
+												src={artworkUrl(album.cover, ARTWORK_SIZES.medium)}
+												className="rounded-md object-contain"
+											/>
 										</div>
-									)}
-								</div>
+										<div className="min-w-0 w-full">
+											<div className="text-xs text-foreground truncate">{album.title}</div>
+											{album.releaseDate && (
+												<div className="text-[0.6rem] text-muted">
+													{album.releaseDate.slice(0, 4)}
+												</div>
+											)}
+										</div>
+									</div>
+								))}
 							</div>
-						))}
-					</div>
-					{albums.length > INITIAL_ALBUMS && (
-						<button
-							onClick={() => setShowAllAlbums((v) => !v)}
-							className="w-full py-2 text-xs text-muted hover:text-foreground transition-colors"
-						>
-							{showAllAlbums ? "Show Less" : `Show More (${albums.length - INITIAL_ALBUMS} more)`}
-						</button>
-					)}
-				</div>
-			)}
+							{albums.length > INITIAL_ALBUMS && (
+								<button
+									onClick={() => setShowAllAlbums((v) => !v)}
+									className="w-full py-2 text-xs text-muted hover:text-foreground transition-colors"
+								>
+									{showAllAlbums ? "Show Less" : `Show More (${albums.length - INITIAL_ALBUMS} more)`}
+								</button>
+							)}
+						</div>
+					),
+				},
+			]} />
 
 			{similarArtists.length > 0 && (
 				<div className="mt-4">

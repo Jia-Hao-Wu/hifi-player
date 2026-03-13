@@ -4,6 +4,7 @@ import { ARTWORK_SIZES, artworkUrl } from "@/api/images";
 import { usePlayer } from "@/contexts/player-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { TrackMeta } from "@/api/metadata";
+import { Track } from "./player-ui/track";
 
 type TrackListPageProps = {
 	title: string;
@@ -82,41 +83,7 @@ export function TrackListPage({
 
 			<div className="flex flex-col">
 				{tracks.map(({ item: track }, index) => (
-					<div
-						key={track.id}
-						className={`group flex items-center gap-3 py-2 px-4 hover:bg-white/10 cursor-pointer ${currentTrack?.id === track.id ? "bg-accent" : ""}`}
-						onClick={() => {
-							enQueue({
-								id: track.id,
-								title: track.title,
-								artist: {
-									id: track.artist.id,
-									name: track.artist.name,
-								},
-								album: track.album?.title,
-								artwork: artworkUrl(track.album?.cover, ARTWORK_SIZES.thumbnail),
-								tidalId: track.id,
-								duration: track.duration,
-							});
-						}}
-					>
-						<span className="w-6 text-xs text-muted">{index + 1}</span>
-						<div className="flex-1 min-w-0">
-							<div className="text-sm text-foreground truncate">{track.title}</div>
-							<div className="text-xs text-muted truncate">{track.artist.name}</div>
-						</div>
-						<div className="text-xs text-muted">
-							{Math.floor(track.duration / 60)}:
-							{(track.duration % 60).toString().padStart(2, "0")}
-						</div>
-						<IconSymbol
-							className="m-auto"
-							name={
-								currentTrack?.id === track.id && isPlaying ? "pause.fill" : "play.fill"
-							}
-							color="var(--color-foreground)"
-						/>
-					</div>
+					<Track key={track.id} track={track} index={index} />
 				))}
 			</div>
 		</div>

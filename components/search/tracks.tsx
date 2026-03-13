@@ -26,7 +26,7 @@ export function Tracks({ query }: TracksProps) {
 	return (
 		<div className="flex flex-col gap-2">
 			{data.items.map((track) => (
-				<Track key={track.id} track={track} showImage={false} />
+				<Track showImage key={track.id} track={track} />
 			))}
 			<div ref={sentinelRef} className="h-1" />
 		</div>
