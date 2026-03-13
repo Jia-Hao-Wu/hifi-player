@@ -69,85 +69,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		}
 	}, [wantsToPlay, status.isLoaded, status.playing, player, queue]);
 
-	const replaceQueue = async (tracks: Track[], currentListId: string) => {
-		setQueue(tracks);
-		setCurrentIndex(0);
-		setCurrentListId(currentListId);
-
-		if (tracks.length > 0) {
-			const track = tracks[0];
-
+	const resolveAndLoad = useCallback(
+		async (track: Track, autoPlay: boolean) => {
 			let streamUri = track.uri;
 
 			if (!streamUri && track.tidalId) {
 				setIsLoading(true);
 				try {
 					streamUri = await getTrackStream(track.tidalId);
-				} catch (e) {
-					setIsLoading(false);
-					return;
-				}
-			}
-
-			if (!streamUri) {
-				setIsLoading(false);
-				return;
-			}
-
-			try {
-				player.replace({ uri: streamUri });
-				setWantsToPlay(true);
-			} catch (e) {
-				console.warn("Failed to load audio:", e);
-			} finally {
-				setIsLoading(false);
-			}
-		}
-	};
-
-	const enQueue = async (track: Track) => {
-		setQueue((prev) => [...prev, track]);
-		setCurrentIndex(queue.length);
-		setCurrentListId(undefined);
-
-		let streamUri = track.uri;
-
-		if (!streamUri && track.tidalId) {
-			setIsLoading(true);
-			try {
-				streamUri = await getTrackStream(track.tidalId);
-			} catch (e) {
-				setIsLoading(false);
-				return;
-			}
-		}
-
-		if (!streamUri) {
-			setIsLoading(false);
-			return;
-		}
-
-		try {
-			player.replace({ uri: streamUri });
-			setWantsToPlay(true);
-		} catch (e) {
-			console.warn("Failed to load audio:", e);
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	const loadSoundAt = useCallback(
-		async (index: number, autoPlay = false) => {
-			const track = queue[index];
-
-			let streamUri = track.uri;
-
-			if (!streamUri && track.tidalId) {
-				setIsLoading(true);
-				try {
-					streamUri = await getTrackStream(track.tidalId);
-				} catch (e) {
+				} catch {
 					setIsLoading(false);
 					return;
 				}
@@ -169,7 +99,31 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				setIsLoading(false);
 			}
 		},
-		[queue, player],
+		[player],
+	);
+
+	const replaceQueue = async (tracks: Track[], currentListId: string) => {
+		setQueue(tracks);
+		setCurrentIndex(0);
+		setCurrentListId(currentListId);
+
+		if (tracks.length > 0) {
+			await resolveAndLoad(tracks[0], true);
+		}
+	};
+
+	const enQueue = async (track: Track) => {
+		setQueue((prev) => [...prev, track]);
+		setCurrentIndex(queue.length);
+		setCurrentListId(undefined);
+		await resolveAndLoad(track, true);
+	};
+
+	const loadSoundAt = useCallback(
+		async (index: number, autoPlay = false) => {
+			await resolveAndLoad(queue[index], autoPlay);
+		},
+		[queue, resolveAndLoad],
 	);
 
 	// Auto-advance when track finishes
@@ -196,7 +150,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		} else {
 			setWantsToPlay(true);
 		}
-	}, [player, queue, status.isLoaded]);
+	}, [player, status.isLoaded]);
 
 	const pause = useCallback(async () => {
 		setWantsToPlay(false);

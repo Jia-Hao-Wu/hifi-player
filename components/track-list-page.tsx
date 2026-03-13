@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { TouchableOpacity, ActivityIndicator } from "react-native";
 import { ARTWORK_SIZES, artworkUrl } from "@/api/images";
-import { getTrackStream } from "@/api";
 import { usePlayer } from "@/contexts/player-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { TrackMeta } from "@/api/metadata";
@@ -61,7 +60,6 @@ export function TrackListPage({
 									artist: track.artist.name,
 									album: track.album?.title,
 									artwork: artworkUrl(track.album?.cover, ARTWORK_SIZES.thumbnail),
-									uri: undefined,
 									tidalId: track.id,
 									duration: track.duration,
 								})),
@@ -83,15 +81,14 @@ export function TrackListPage({
 				{tracks.map(({ item: track }, index) => (
 					<div
 						key={track.id}
-						className="group flex items-center gap-3 py-2 px-4 hover:bg-white/10 cursor-pointer"
-						onClick={async () => {
+						className={`group flex items-center gap-3 py-2 px-4 hover:bg-white/10 cursor-pointer ${currentTrack?.id === track.id ? "bg-accent" : ""}`}
+						onClick={() => {
 							enQueue({
 								id: track.id,
 								title: track.title,
 								artist: track.artist.name,
 								album: track.album?.title,
-								artwork: artworkUrl(track.album?.cover, ARTWORK_SIZES.thumbnail),
-								uri: await getTrackStream(track.id),
+								artwork: artworkUrl(track.album?.cover, ARTWORK_SIZES.thumbnail), 
 								tidalId: track.id,
 								duration: track.duration,
 							});

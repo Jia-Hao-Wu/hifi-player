@@ -11,6 +11,7 @@ module.exports = {
 				muted: "var(--color-muted)",
 				"player-surface": "var(--color-player-surface)",
 				"player-border": "var(--color-player-border)",
+				accent: "var(--color-accent)",
 			},
 		},
 	},

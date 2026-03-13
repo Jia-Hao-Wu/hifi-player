@@ -32,7 +32,7 @@ export function Tracks({ query }: TracksProps) {
 			{data.items.map((track) => (
 				<div
 					key={track.id}
-					className="group flex items-center gap-3 py-1 px-2 hover:bg-white/10 rounded-sm overflow-visible cursor-pointer"
+					className={`group flex items-center gap-3 py-3 px-5 hover:bg-white/10 rounded-sm overflow-visible cursor-pointer ${currentTrack?.id === track.id ? "bg-accent" : ""}`}
 					onClick={async () => {
 						enQueue({
 							id: track.id,
@@ -49,7 +49,7 @@ export function Tracks({ query }: TracksProps) {
 					<div className="flex items-center flex-1 overflow-visible">
 						<span className="flex rounded-md w-12 h-12 overflow-visible mr-5 relative">
 							<img
-								className="rounded-md transition-transform duration-200 group-hover:scale-110 group-hover:z-10"
+								className={`rounded-md transition-transform duration-200 group-hover:scale-110 group-hover:z-10 ${currentTrack?.id === track.id ? "scale-110 z-10" : ""}`}
 								src={artworkUrl(track.album.cover, ARTWORK_SIZES.thumbnail)}
 							/>
 							<div className="bg-transparent group-hover:bg-black/30 transition-colors z-20 absolute h-full w-full flex items-center justify-center">
