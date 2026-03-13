@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { Image, Pressable, Text, View } from "react-native";
 import { ARTWORK_SIZES, artworkUrl } from "@/api/images";
 import { useSearchArtists } from "@/hooks/use-search";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
@@ -19,34 +20,34 @@ export function Artists({ query }: ArtistsProps) {
 
 	if (isLoading || !data) {
 		return (
-			<div className="flex items-center justify-center py-12">
-				<div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" />
-			</div>
+			<View className="flex items-center justify-center py-12">
+				<View className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+			</View>
 		);
 	}
 
 	return (
-		<div className="flex flex-col gap-2">
+		<View className="flex flex-col gap-2">
 			{data.items.map((artist) => (
-				<div
+				<Pressable
 					key={artist.id}
-					className="group flex items-center gap-3 py-3 px-5 hover:bg-white/10 rounded-sm overflow-visible cursor-pointer"
-					onClick={() => router.push(`/artist/${artist.id}`)}
+					className="group flex-row items-center gap-3 py-3 px-5 hover:bg-white/10 rounded-sm overflow-visible"
+					onPress={() => router.push(`/artist/${artist.id}`)}
 				>
-					<div className="flex items-center flex-1 overflow-visible">
-						<span className="flex rounded-full w-12 h-12 overflow-visible mr-5 relative">
-							<img
-								className="rounded-full transition-transform duration-200 group-hover:scale-110 group-hover:z-10"
-								src={artworkUrl(artist.picture, ARTWORK_SIZES.medium)}
+					<View className="flex-row items-center flex-1 overflow-visible">
+						<View className="flex rounded-full w-12 h-12 overflow-visible mr-5 relative">
+							<Image
+								className="rounded-full w-12 h-12"
+								source={{ uri: artworkUrl(artist.picture, ARTWORK_SIZES.medium) }}
 							/>
-						</span>
-						<div className="min-w-0">
-							<div className="text-sm text-foreground truncate">{artist.name}</div>
-						</div>
-					</div>
-				</div>
+						</View>
+						<View className="min-w-0">
+							<Text className="text-sm text-foreground" numberOfLines={1}>{artist.name}</Text>
+						</View>
+					</View>
+				</Pressable>
 			))}
-			<div ref={sentinelRef} className="h-1" />
-		</div>
+			<View ref={sentinelRef} className="h-1" />
+		</View>
 	);
 }

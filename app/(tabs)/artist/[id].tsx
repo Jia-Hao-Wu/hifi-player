@@ -1,6 +1,7 @@
- import { useState } from "react";
+import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { getArtistDetail } from "@/api";
 import { ARTWORK_SIZES, artworkUrl } from "@/api/images";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -36,9 +37,9 @@ export default function ArtistPage() {
 
 	if (isLoading || !data) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center bg-background">
-				<div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" />
-			</div>
+			<View className="flex flex-1 flex-col items-center justify-center bg-background">
+				<View className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+			</View>
 		);
 	}
 
@@ -47,112 +48,119 @@ export default function ArtistPage() {
 	const visibleAlbums = showAllAlbums ? albums : albums.slice(0, INITIAL_ALBUMS);
 
 	return (
-		<div className="flex flex-1 flex-col bg-background overflow-y-auto">
-			<div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 bg-background/80 backdrop-blur">
-				<button onClick={() => router.back()} className="text-foreground">
+		<ScrollView className="flex flex-1 flex-col bg-background">
+			<View className="sticky top-0 z-10 flex-row items-center gap-3 px-4 py-3 bg-background/80 backdrop-blur">
+				<Pressable onPress={() => router.back()} className="text-foreground">
 					<IconSymbol name="chevron.left" color="var(--color-foreground)" />
-				</button>
-				<span className="text-sm text-foreground font-medium truncate">
+				</Pressable>
+				<Text className="text-sm text-foreground font-medium" numberOfLines={1}>
 					{artist.name}
-				</span>
-			</div>
+				</Text>
+			</View>
 
-			<div className="flex flex-col items-center px-4 pb-4">
-				<img
-					src={artworkUrl(artist.picture, ARTWORK_SIZES.medium)}
-					className="w-48 h-48 rounded-full object-cover"
+			<View className="flex flex-col items-center px-4 pb-4">
+				<Image
+					source={{ uri: artworkUrl(artist.picture, ARTWORK_SIZES.medium) }}
+					className="w-48 h-48 rounded-full"
+					resizeMode="cover"
 				/>
-				<div className="mt-3 text-center">
-					<div className="text-base text-foreground font-medium">{artist.name}</div>
-				</div>
-			</div>
+				<View className="mt-3 items-center">
+					<Text className="text-base text-foreground font-medium">{artist.name}</Text>
+				</View>
+			</View>
 
 			<Tabs tabs={[
 				{
 					label: `Tracks (${tracks.length})`,
 					content: tracks.length > 0 && (
-						<div>
-							<div className="flex flex-col">
+						<View>
+							<View className="flex flex-col">
 								{visibleTracks.map((track, index) => (
 									<Track key={track.id} track={track} index={index} />
 								))}
-							</div>
+							</View>
 							{tracks.length > INITIAL_TRACKS && (
-								<button
-									onClick={() => setShowAllTracks((v) => !v)}
-									className="w-full py-2 text-xs text-muted hover:text-foreground transition-colors"
+								<Pressable
+									onPress={() => setShowAllTracks((v) => !v)}
+									className="w-full py-2 items-center"
 								>
-									{showAllTracks ? "Show Less" : `Show More (${tracks.length - INITIAL_TRACKS} more)`}
-								</button>
+									<Text className="text-xs text-muted">
+										{showAllTracks ? "Show Less" : `Show More (${tracks.length - INITIAL_TRACKS} more)`}
+									</Text>
+								</Pressable>
 							)}
-						</div>
+						</View>
 					),
 				},
 				{
 					label: `Albums (${albums.length})`,
 					content: albums.length > 0 && (
-						<div>
-							<div className="grid grid-cols-2 gap-2 px-4">
+						<View>
+							<View className="flex-row flex-wrap gap-2 px-4">
 								{visibleAlbums.map((album) => (
-									<div
+									<Pressable
 										key={album.id}
-										className="group flex flex-col items-start gap-2 p-2 bg-orange-950/50 rounded-sm overflow-visible cursor-pointer"
-										onClick={() => router.push(`/album/${album.id}`)}
+										className="w-[48%] flex flex-col items-start gap-2 p-2 bg-orange-950/50 rounded-sm overflow-visible"
+										onPress={() => router.push(`/album/${album.id}`)}
 									>
-										<div className="flex rounded-md overflow-visible relative">
-											<img
-												src={artworkUrl(album.cover, ARTWORK_SIZES.medium)}
-												className="rounded-md object-contain"
+										<View className="flex rounded-md overflow-visible relative">
+											<Image
+												source={{ uri: artworkUrl(album.cover, ARTWORK_SIZES.medium) }}
+												className="w-full aspect-square rounded-md"
+												resizeMode="contain"
 											/>
-										</div>
-										<div className="min-w-0 w-full">
-											<div className="text-xs text-foreground truncate">{album.title}</div>
+										</View>
+										<View className="min-w-0 w-full">
+											<Text className="text-xs text-foreground" numberOfLines={1}>{album.title}</Text>
 											{album.releaseDate && (
-												<div className="text-[0.6rem] text-muted">
+												<Text className="text-[10px] text-muted">
 													{album.releaseDate.slice(0, 4)}
-												</div>
+												</Text>
 											)}
-										</div>
-									</div>
+										</View>
+									</Pressable>
 								))}
-							</div>
+							</View>
 							{albums.length > INITIAL_ALBUMS && (
-								<button
-									onClick={() => setShowAllAlbums((v) => !v)}
-									className="w-full py-2 text-xs text-muted hover:text-foreground transition-colors"
+								<Pressable
+									onPress={() => setShowAllAlbums((v) => !v)}
+									className="w-full py-2 items-center"
 								>
-									{showAllAlbums ? "Show Less" : `Show More (${albums.length - INITIAL_ALBUMS} more)`}
-								</button>
+									<Text className="text-xs text-muted">
+										{showAllAlbums ? "Show Less" : `Show More (${albums.length - INITIAL_ALBUMS} more)`}
+									</Text>
+								</Pressable>
 							)}
-						</div>
+						</View>
 					),
 				},
 			]} />
 
 			{similarArtists.length > 0 && (
-				<div className="mt-4">
-					<div className="px-4 py-2 text-xs text-muted font-medium uppercase">
+				<View className="mt-4">
+					<Text className="px-4 py-2 text-xs text-muted font-medium uppercase">
 						Similar Artists
-					</div>
-					<div className="flex gap-3 px-4 pb-4 overflow-x-auto">
+					</Text>
+					<ScrollView horizontal className="px-4 pb-4" contentContainerClassName="gap-3">
 						{similarArtists.map((a) => (
-							<div
+							<Pressable
 								key={a.id}
-								className="flex flex-col items-center gap-2 shrink-0 cursor-pointer"
-								onClick={() => router.push(`/artist/${a.id}`)}
+								className="flex flex-col items-center gap-2"
+								onPress={() => router.push(`/artist/${a.id}`)}
 							>
-								<img
-									src={artworkUrl(a.picture, ARTWORK_SIZES.thumbnail)}
-									className="w-20 h-20 rounded-full object-cover"
+								<Image
+									source={{ uri: artworkUrl(a.picture, ARTWORK_SIZES.thumbnail) }}
+									className="w-20 h-20 rounded-full"
+									resizeMode="cover"
 								/>
-								<span className="text-xs text-foreground text-center w-20 truncate">
+								<Text className="text-xs text-foreground text-center w-20" numberOfLines={1}>
 									{a.name}
-								</span>
-							</div>
+								</Text>
+							</Pressable>
 						))}
-					</div>
-				</div>
+					</ScrollView>
+				</View>
 			)}
-		</div>
+		</ScrollView>
 	);
 }

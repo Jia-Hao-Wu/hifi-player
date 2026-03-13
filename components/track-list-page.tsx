@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { TouchableOpacity, ActivityIndicator } from "react-native";
+import { Image, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { ARTWORK_SIZES, artworkUrl } from "@/api/images";
 import { usePlayer } from "@/contexts/player-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -26,34 +26,31 @@ export function TrackListPage({
 		usePlayer();
 
 	return (
-		<div className="flex flex-1 flex-col bg-background overflow-y-auto">
-			<div className="sticky top-0 z-10 flex justify-between items-center gap-3 p-2 bg-background/80 backdrop-blur">
-				<button
-					onClick={() => router.back()}
-					className="flex items-center justify-center text-foreground"
+		<ScrollView className="flex flex-1 flex-col bg-background">
+			<View className="sticky top-0 z-10 flex-row justify-between items-center gap-3 p-2 bg-background/80 backdrop-blur">
+				<Pressable
+					onPress={() => router.back()}
+					className="flex items-center justify-center"
 				>
 					<IconSymbol name="chevron.left" size={30} color="var(--color-foreground)" />
-				</button>
-			</div>
+				</Pressable>
+			</View>
 
-			<div className="flex flex-col items-center px-4 pb-4">
+			<View className="flex flex-col items-center px-4 pb-4">
 				{image && (
-					<img
-						src={artworkUrl(image, ARTWORK_SIZES.large)}
-						className="w-48 h-48 rounded-md object-contain"
+					<Image
+						source={{ uri: artworkUrl(image, ARTWORK_SIZES.large) }}
+						className="w-48 h-48 rounded-md"
+						resizeMode="contain"
 					/>
 				)}
-				<div className="mt-3 text-center">
-					<div className="text-base text-foreground font-medium">{title}</div>
-					{subtitle && <div className="text-xs text-muted">{subtitle}</div>}
-				</div>
-				<div className="mt-5">
+				<View className="mt-3 items-center">
+					<Text className="text-base text-foreground font-medium">{title}</Text>
+					{subtitle && <Text className="text-xs text-muted">{subtitle}</Text>}
+				</View>
+				<View className="mt-5">
 					<TouchableOpacity
-						onPress={() => {
-							if (id === currentListId) {
-								return isPlaying ? pause() : play();
-							}
-
+						onPress={() =>
 							replaceQueue(
 								tracks.map(({ item: track }) => ({
 									id: track.id,
@@ -67,9 +64,9 @@ export function TrackListPage({
 									tidalId: track.id,
 									duration: track.duration,
 								})),
-								id,
-							);
-						}}
+								id
+							)
+						}
 						className="h-9 w-9 items-center justify-center rounded-full bg-foreground"
 					>
 						<IconSymbol
@@ -78,14 +75,14 @@ export function TrackListPage({
 							color="var(--color-background)"
 						/>
 					</TouchableOpacity>
-				</div>
-			</div>
+				</View>
+			</View>
 
-			<div className="flex flex-col">
+			<View className="flex flex-col">
 				{tracks.map(({ item: track }, index) => (
 					<Track key={track.id} track={track} index={index} />
 				))}
-			</div>
-		</div>
+			</View>
+		</ScrollView>
 	);
 }

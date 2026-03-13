@@ -1,10 +1,14 @@
+import { TextInput, type TextInputProps, View } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
-export function Searchbox({ ...props }: React.ComponentPropsWithoutRef<"input">) {
+type SearchboxProps = Omit<TextInputProps, "style">;
+
+export function Searchbox(props: SearchboxProps) {
 	return (
-		<div className="relative ">
-			<input
-				className="bg-player-surface focus:outline-none dark:focus:bg-white/10 focus:bg-black/10 rounded-md px-3 py-2 w-full text-sm transition-colors duration-200 text-foreground"
+		<View className="relative">
+			<TextInput
+				className="bg-player-surface rounded-md px-3 py-2 w-full text-sm text-foreground"
+				placeholderTextColor="var(--color-muted)"
 				{...props}
 			/>
 			<IconSymbol
@@ -13,6 +17,6 @@ export function Searchbox({ ...props }: React.ComponentPropsWithoutRef<"input">)
 				name="magnifyingglass"
 				color="var(--color-foreground)"
 			/>
-		</div>
+		</View>
 	);
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 type Tab = {
 	label: string;
@@ -14,23 +15,29 @@ export function Tabs({ tabs, defaultIndex = 0 }: TabsProps) {
 	const [activeIndex, setActiveIndex] = useState(defaultIndex);
 
 	return (
-		<div className="flex min-h-0 flex-1 flex-col">
-			<div className="flex gap-1 border-b border-foreground/10 justify-evenly">
+		<View className="flex min-h-0 flex-1 flex-col">
+			<View className="flex-row gap-1 border-b border-foreground/10 justify-evenly">
 				{tabs.map((tab, index) => (
-					<button
+					<Pressable
 						key={tab.label}
-						onClick={() => setActiveIndex(index)}
-						className={`px-4 py-2 text-sm font-medium transition-colors duration-200 border-b-2 -mb-px ${
+						onPress={() => setActiveIndex(index)}
+						className={`px-4 py-2 border-b-2 -mb-px ${
 							index === activeIndex
-								? "border-foreground text-foreground"
-								: "border-transparent text-muted"
+								? "border-foreground"
+								: "border-transparent"
 						}`}
 					>
-						{tab.label}
-					</button>
+						<Text
+							className={`text-sm font-medium ${
+								index === activeIndex ? "text-foreground" : "text-muted"
+							}`}
+						>
+							{tab.label}
+						</Text>
+					</Pressable>
 				))}
-			</div>
-			<div className="min-h-0 flex-1 overflow-y-auto pt-4">{tabs[activeIndex]?.content}</div>
-		</div>
+			</View>
+			<ScrollView className="min-h-0 flex-1 pt-4">{tabs[activeIndex]?.content}</ScrollView>
+		</View>
 	);
 }

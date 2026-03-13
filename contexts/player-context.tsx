@@ -102,10 +102,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		[player],
 	);
 
-	const replaceQueue = async (tracks: Track[], currentListId: string) => {
+	const replaceQueue = async (tracks: Track[], listId: string) => {
+		if (currentListId === listId) {
+			return !player.paused ? pause() : play();
+		}
+
 		setQueue(tracks);
 		setCurrentIndex(0);
-		setCurrentListId(currentListId);
+		setCurrentListId(listId);
 
 		if (tracks.length > 0) {
 			await resolveAndLoad(tracks[0], true);
@@ -113,6 +117,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	const enQueue = async (track: Track) => {
+		const currentTrack = queue[currentIndex] ?? null;
+		
+		if (track.id === currentTrack?.id) {
+			return !player.paused ? pause() : play();
+		}
+
 		setQueue((prev) => [...prev, track]);
 		setCurrentIndex(queue.length);
 		setCurrentListId(undefined);

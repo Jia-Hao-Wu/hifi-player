@@ -1,8 +1,8 @@
+import { Image, Pressable, Text, View } from "react-native";
 import { ARTWORK_SIZES, artworkUrl, getTrackStream } from "@/api";
 import { usePlayer } from "@/contexts/player-context";
 import { IconSymbol } from "../ui/icon-symbol";
 import { TrackMeta } from "@/api/metadata";
-import { isSet } from "@/utils";
 
 export type TrackProps = {
 	track: TrackMeta;
@@ -11,7 +11,7 @@ export type TrackProps = {
 };
 
 export function Track({ track, showImage = false, index }: TrackProps) {
-	const { currentTrack, isPlaying, enQueue, pause, play } = usePlayer();
+	const { currentTrack, isPlaying, enQueue } = usePlayer();
 
 	let artistAlbum;
 	let mainArtist = track.artist;
@@ -26,14 +26,10 @@ export function Track({ track, showImage = false, index }: TrackProps) {
 	}
 
 	return (
-		<div
+		<Pressable
 			key={track.id}
-			className={`group flex items-center gap-3 py-3 px-5 hover:bg-white/10 rounded-sm overflow-visible cursor-pointer ${currentTrack?.id === track.id ? "bg-accent" : ""}`}
-			onClick={async () => {
-				if (track.id === currentTrack?.id) {
-					return isPlaying ? pause() : play();
-				}
-
+			className={`group flex-row items-center gap-3 py-3 px-5 hover:bg-white/10 rounded-sm overflow-hidden ${currentTrack?.id === track.id ? "bg-accent" : ""}`}
+			onPress={async () =>
 				enQueue({
 					id: track.id,
 					title: track.title,
@@ -43,20 +39,20 @@ export function Track({ track, showImage = false, index }: TrackProps) {
 					uri: await getTrackStream(track.id),
 					tidalId: track.id,
 					duration: track.duration,
-				});
-			}}
+				})
+			}
 		>
-			<div className="flex items-center flex-1 overflow-visible">
+			<View className="flex-row items-center flex-1 min-w-0 overflow-visible">
 				{index !== undefined ? (
-					<span className="w-6 text-xs text-muted">{index + 1}</span>
+					<Text className="w-6 text-xs text-muted">{index + 1}</Text>
 				) : null}
 				{showImage && (
-					<span className="flex rounded-md w-12 h-12 overflow-visible mr-5 relative">
-						<img
-							className={`rounded-md transition-transform duration-200 group-hover:scale-110 group-hover:z-10 ${currentTrack?.id === track.id ? "scale-110 z-10" : ""}`}
-							src={artworkUrl(track.album.cover, ARTWORK_SIZES.thumbnail)}
+					<View className="flex rounded-md border-none w-12 h-12 overflow-visible mr-5 relative">
+						<Image
+							className={`rounded-md w-12 h-12 ${currentTrack?.id === track.id ? "scale-110 z-10" : ""}`}
+							source={{ uri: artworkUrl(track.album.cover, ARTWORK_SIZES.thumbnail) }}
 						/>
-						<div className="bg-transparent group-hover:bg-black/30 transition-colors z-20 absolute h-full w-full flex items-center justify-center">
+						<View className="bg-transparent rounded-md group-hover:bg-black/30 transition-colors z-20 absolute h-full w-full flex items-center justify-center">
 							<IconSymbol
 								className="m-auto"
 								name={
@@ -64,19 +60,19 @@ export function Track({ track, showImage = false, index }: TrackProps) {
 								}
 								color="var(--color-foreground)"
 							/>
-						</div>
-					</span>
+						</View>
+					</View>
 				)}
-				<div className="flex-1 min-w-0">
-					<div className="text-sm text-foreground truncate">{track.title}</div>
-					<div className="text-xs text-muted truncate">{artistAlbum}</div>
-				</div>
-			</div>
-			<div className="flex items-center gap-2">
-				<div className="text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+				<View className="flex-1 min-w-0">
+					<Text className="text-sm text-foreground" numberOfLines={1}>{track.title}</Text>
+					<Text className="text-xs text-muted" numberOfLines={1}>{artistAlbum}</Text>
+				</View>
+			</View>
+			<View className="flex-row items-center gap-2">
+				<Text className="text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity">
 					{Math.floor(track.duration / 60)}:
 					{(track.duration % 60).toString().padStart(2, "0")}
-				</div>
+				</Text>
 				{!showImage && (
 					<IconSymbol
 						className={
@@ -88,7 +84,7 @@ export function Track({ track, showImage = false, index }: TrackProps) {
 						color="var(--color-foreground)"
 					/>
 				)}
-			</div>
-		</div>
+			</View>
+		</Pressable>
 	);
 }

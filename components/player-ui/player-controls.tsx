@@ -1,7 +1,6 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
 	ActivityIndicator,
-	Image,
 	PanResponder,
 	Text,
 	TouchableOpacity,
@@ -37,6 +36,7 @@ export function PlayerControls() {
 	const barWidthRef = useRef(0);
 	const durationRef = useRef(duration);
 	const seekRef = useRef(seek);
+	const scrubRatioRef = useRef(0);
 	durationRef.current = duration;
 	seekRef.current = seek;
 
@@ -54,12 +54,14 @@ export function PlayerControls() {
 				if (!barWidthRef.current) return;
 				const ratio = MinMax(0, 1, evt.nativeEvent.locationX / barWidthRef.current);
 				startRatioRef.current = ratio;
+				scrubRatioRef.current = ratio;
 				setIsScrubbing(true);
 				setScrubRatio(ratio);
 			},
 			onPanResponderMove: (_evt, gestureState) => {
 				if (!barWidthRef.current) return;
 				const ratio = MinMax(0, 1, startRatioRef.current + gestureState.dx / barWidthRef.current);
+				scrubRatioRef.current = ratio;
 				setScrubRatio(ratio);
 			},
 			onPanResponderRelease: (_evt, gestureState) => {
@@ -70,6 +72,9 @@ export function PlayerControls() {
 				setIsScrubbing(false);
 			},
 			onPanResponderTerminate: () => {
+				if (durationRef.current) {
+					seekRef.current(scrubRatioRef.current * durationRef.current);
+				}
 				setIsScrubbing(false);
 			},
 		}),
@@ -117,11 +122,10 @@ export function PlayerControls() {
 			</View>
 
 			<View className="flex-row items-center gap-[10px] px-3 py-2">
-				<Image
-					source={{ uri: currentTrack.artwork }}
-					className="h-11 w-11 rounded-md bg-gray-300"
+				<img
+					src={currentTrack.artwork}
+					className="h-11 w-11 rounded-md"
 				/>
-
 				<View className="flex-1 gap-0.5">
 					<Text
 						className="text-sm font-semibold tracking-tight text-foreground"
