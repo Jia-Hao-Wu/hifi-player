@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { View } from "react-native";
 
 import { Tabs } from "@/components/ui/tabs";
@@ -12,6 +12,10 @@ import { Albums } from "@/components/search/albums";
 
 export default function HomeScreen() {
 	const [query, setQuery] = useState("");
+	const tracksEndRef = useRef<(() => void) | undefined>();
+	const artistsEndRef = useRef<(() => void) | undefined>();
+	const playlistsEndRef = useRef<(() => void) | undefined>();
+	const albumsEndRef = useRef<(() => void) | undefined>();
 
 	const handleSearch = useDebouncedCallback((text: string) => {
 		setQuery(text);
@@ -27,19 +31,23 @@ export default function HomeScreen() {
 					tabs={[
 						{
 							label: "Tracks",
-							content: <Tracks query={query} />,
+							content: <Tracks query={query} onEndReachedRef={tracksEndRef} />,
+							onEndReached: () => tracksEndRef.current?.(),
 						},
 						{
 							label: "Artists",
-							content: <Artists query={query} />,
+							content: <Artists query={query} onEndReachedRef={artistsEndRef} />,
+							onEndReached: () => artistsEndRef.current?.(),
 						},
 						{
 							label: "Playlists",
-							content: <Playlists query={query} />,
+							content: <Playlists query={query} onEndReachedRef={playlistsEndRef} />,
+							onEndReached: () => playlistsEndRef.current?.(),
 						},
 						{
 							label: "Albums",
-							content: <Albums query={query} />,
+							content: <Albums query={query} onEndReachedRef={albumsEndRef} />,
+							onEndReached: () => albumsEndRef.current?.(),
 						},
 					]}
 				/>

@@ -1,4 +1,4 @@
-# Tsu
+# hifi-music-player
 
 A hi-fi music player built with Expo and React Native. Provides search, queuing, and playback with streaming integration.
 

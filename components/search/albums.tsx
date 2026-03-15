@@ -1,22 +1,26 @@
+import { useEffect } from "react";
+import type { MutableRefObject } from "react";
 import { useRouter } from "expo-router";
 import { Text, View } from "react-native";
 import { useSearchAlbums } from "@/hooks/use-search";
-import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { MediaCard } from "@/components/media-card";
 
 type AlbumsProps = {
 	query: string;
+	onEndReachedRef?: MutableRefObject<(() => void) | undefined>;
 };
 
-export function Albums({ query }: AlbumsProps) {
+export function Albums({ query, onEndReachedRef }: AlbumsProps) {
 	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
 		useSearchAlbums(query);
 
 	const router = useRouter();
-	const sentinelRef = useInfiniteScroll(
-		() => fetchNextPage(),
-		!!hasNextPage && !isFetchingNextPage,
-	);
+
+	useEffect(() => {
+		if (!onEndReachedRef) return;
+		onEndReachedRef.current =
+			hasNextPage && !isFetchingNextPage ? () => fetchNextPage() : undefined;
+	}, [onEndReachedRef, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 	if (isLoading || !data) {
 		return (
@@ -28,10 +32,10 @@ export function Albums({ query }: AlbumsProps) {
 
 	return (
 		<View className="grid grid-cols-2 gap-4 p-4">
-			{data.items.map((album) => (
+			{data.items.map((album, index) => (
 				<MediaCard
-					key={album.id}
-					className="gap-3 p-2 bg-orange-950/50"
+					key={`${album.id}-${index}`}
+					className="gap-3 p-4 bg-accent-2 rounded-lg"
 					image={album.cover}
 					title={album.title}
 					onPress={() => router.push({ pathname: "/album/[id]", params: { id: String(album.id), title: album.title, image: album.cover } })}
@@ -40,7 +44,6 @@ export function Albums({ query }: AlbumsProps) {
 					<Text className="text-[10px] text-muted">{album.numberOfTracks} tracks</Text>
 				</MediaCard>
 			))}
-			<View ref={sentinelRef} className="h-1" />
 		</View>
 	);
 }

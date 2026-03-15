@@ -1,20 +1,23 @@
+import { useEffect } from "react";
+import type { MutableRefObject } from "react";
 import { View } from "react-native";
 import { useSearchTracks } from "@/hooks/use-search";
-import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Track } from "@/components/player-ui/track";
 
 type TracksProps = {
 	query: string;
+	onEndReachedRef?: MutableRefObject<(() => void) | undefined>;
 };
 
-export function Tracks({ query }: TracksProps) {
+export function Tracks({ query, onEndReachedRef }: TracksProps) {
 	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
 		useSearchTracks(query);
 
-	const sentinelRef = useInfiniteScroll(
-		() => fetchNextPage(),
-		!!hasNextPage && !isFetchingNextPage,
-	);
+	useEffect(() => {
+		if (!onEndReachedRef) return;
+		onEndReachedRef.current =
+			hasNextPage && !isFetchingNextPage ? () => fetchNextPage() : undefined;
+	}, [onEndReachedRef, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 	if (isLoading || !data) {
 		return (
@@ -26,10 +29,9 @@ export function Tracks({ query }: TracksProps) {
 
 	return (
 		<View className="flex flex-col gap-2">
-			{data.items.map((track) => (
-				<Track showImage key={track.id} track={track} />
+			{data.items.map((track, index) => (
+				<Track showImage key={`${track.id}-${index}`} track={track} />
 			))}
-			<View ref={sentinelRef} className="h-1" />
 		</View>
 	);
 }

@@ -1,9 +1,11 @@
 import { useState } from "react";
+import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 type Tab = {
 	label: string;
 	content: React.ReactNode;
+	onEndReached?: () => void;
 };
 
 type TabsProps = {
@@ -11,12 +13,22 @@ type TabsProps = {
 	defaultIndex?: number;
 };
 
+const END_REACHED_THRESHOLD = 200;
+
 export function Tabs({ tabs, defaultIndex = 0 }: TabsProps) {
 	const [activeIndex, setActiveIndex] = useState(defaultIndex);
 
+	const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+		const { layoutMeasurement, contentSize, contentOffset } = e.nativeEvent;
+		const distanceFromEnd = contentSize.height - layoutMeasurement.height - contentOffset.y;
+		if (distanceFromEnd < END_REACHED_THRESHOLD) {
+			tabs[activeIndex]?.onEndReached?.();
+		}
+	};
+
 	return (
 		<View className="flex min-h-0 flex-1 flex-col">
-			<View className="flex-row gap-1 border-b border-foreground/10 justify-evenly">
+			<View className="flex-row gap-1 justify-evenly">
 				{tabs.map((tab, index) => (
 					<Pressable
 						key={tab.label}
@@ -37,7 +49,13 @@ export function Tabs({ tabs, defaultIndex = 0 }: TabsProps) {
 					</Pressable>
 				))}
 			</View>
-			<ScrollView className="min-h-0 flex-1 pt-4">{tabs[activeIndex]?.content}</ScrollView>
+			<ScrollView
+				className="min-h-0 flex-1 pt-4"
+				onScroll={handleScroll}
+				scrollEventThrottle={400}
+			>
+				{tabs[activeIndex]?.content}
+			</ScrollView>
 		</View>
 	);
 }

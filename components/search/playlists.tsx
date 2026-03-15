@@ -1,22 +1,26 @@
+import { useEffect } from "react";
+import type { MutableRefObject } from "react";
 import { useRouter } from "expo-router";
 import { Text, View } from "react-native";
 import { useSearchPlaylists } from "@/hooks/use-search";
-import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { MediaCard } from "@/components/media-card";
 
 type PlaylistsProps = {
 	query: string;
+	onEndReachedRef?: MutableRefObject<(() => void) | undefined>;
 };
 
-export function Playlists({ query }: PlaylistsProps) {
+export function Playlists({ query, onEndReachedRef }: PlaylistsProps) {
 	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
 		useSearchPlaylists(query);
 
 	const router = useRouter();
-	const sentinelRef = useInfiniteScroll(
-		() => fetchNextPage(),
-		!!hasNextPage && !isFetchingNextPage,
-	);
+
+	useEffect(() => {
+		if (!onEndReachedRef) return;
+		onEndReachedRef.current =
+			hasNextPage && !isFetchingNextPage ? () => fetchNextPage() : undefined;
+	}, [onEndReachedRef, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 	if (isLoading || !data) {
 		return (
@@ -28,10 +32,10 @@ export function Playlists({ query }: PlaylistsProps) {
 
 	return (
 		<View className="grid grid-cols-2 gap-4 p-4">
-			{data.items.map((playlist) => (
+			{data.items.map((playlist, index) => (
 				<MediaCard
-					key={playlist.uuid}
-					className="gap-3 p-2 bg-gray-800/50"
+					key={`${playlist.uuid}-${index}`}
+					className="gap-3 p-4 bg-accent rounded-md"
 					image={playlist.squareImage}
 					title={playlist.title}
 					onPress={() => router.push({ pathname: "/playlist/[id]", params: { id: playlist.uuid, title: playlist.title, image: playlist.squareImage } })}
@@ -40,7 +44,6 @@ export function Playlists({ query }: PlaylistsProps) {
 					<Text className="text-[10px] text-muted">{playlist.numberOfTracks} tracks</Text>
 				</MediaCard>
 			))}
-			<View ref={sentinelRef} className="h-1" />
 		</View>
 	);
 }

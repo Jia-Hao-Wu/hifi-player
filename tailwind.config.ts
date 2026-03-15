@@ -12,6 +12,7 @@ module.exports = {
 				"player-surface": "var(--color-player-surface)",
 				"player-border": "var(--color-player-border)",
 				accent: "var(--color-accent)",
+				"accent-2": "var(--color-accent-2)",
 			},
 		},
 	},

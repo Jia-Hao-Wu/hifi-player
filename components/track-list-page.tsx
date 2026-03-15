@@ -5,6 +5,7 @@ import { usePlayer } from "@/contexts/player-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { TrackMeta } from "@/api/metadata";
 import { Track } from "./player-ui/track";
+import { PausePlayButton } from "./player-ui/pause-play-button";
 
 type TrackListPageProps = {
 	title: string;
@@ -22,7 +23,7 @@ export function TrackListPage({
 	tracks,
 }: TrackListPageProps) {
 	const router = useRouter();
-	const { currentTrack, isPlaying, enQueue, replaceQueue, pause, play, currentListId } =
+	const { isPlaying, replaceQueue, currentListId } =
 		usePlayer();
 
 	return (
@@ -49,8 +50,9 @@ export function TrackListPage({
 					{subtitle && <Text className="text-xs text-muted">{subtitle}</Text>}
 				</View>
 				<View className="mt-5">
-					<TouchableOpacity
-						onPress={() =>
+					<PausePlayButton
+						isPlaying={isPlaying && id === currentListId}
+						onPress={() => {
 							replaceQueue(
 								tracks.map(({ item: track }) => ({
 									id: track.id,
@@ -64,17 +66,10 @@ export function TrackListPage({
 									tidalId: track.id,
 									duration: track.duration,
 								})),
-								id
-							)
-						}
-						className="h-9 w-9 items-center justify-center rounded-full bg-foreground"
-					>
-						<IconSymbol
-							name={isPlaying && id === currentListId ? "pause.fill" : "play.fill"}
-							size={20}
-							color="var(--color-background)"
-						/>
-					</TouchableOpacity>
+								id,
+							);
+						}}
+					/>
 				</View>
 			</View>
 

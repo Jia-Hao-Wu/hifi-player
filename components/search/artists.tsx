@@ -1,19 +1,23 @@
+import { useEffect } from "react";
+import type { MutableRefObject } from "react";
 import { View } from "react-native";
 import { useSearchArtists } from "@/hooks/use-search";
-import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { ArtistCard } from "@/components/artist-card";
 
 type ArtistsProps = {
 	query: string;
+	onEndReachedRef?: MutableRefObject<(() => void) | undefined>;
 };
 
-export function Artists({ query }: ArtistsProps) {
+export function Artists({ query, onEndReachedRef }: ArtistsProps) {
 	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
 		useSearchArtists(query);
-	const sentinelRef = useInfiniteScroll(
-		() => fetchNextPage(),
-		!!hasNextPage && !isFetchingNextPage,
-	);
+
+	useEffect(() => {
+		if (!onEndReachedRef) return;
+		onEndReachedRef.current =
+			hasNextPage && !isFetchingNextPage ? () => fetchNextPage() : undefined;
+	}, [onEndReachedRef, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 	if (isLoading || !data) {
 		return (
@@ -25,10 +29,9 @@ export function Artists({ query }: ArtistsProps) {
 
 	return (
 		<View className="flex flex-col gap-2">
-			{data.items.map((artist) => (
-				<ArtistCard key={artist.id} artist={artist} variant="row" />
+			{data.items.map((artist, index) => (
+				<ArtistCard key={`${artist.id}-${index}`} artist={artist} variant="row" />
 			))}
-			<View ref={sentinelRef} className="h-1" />
 		</View>
 	);
 }

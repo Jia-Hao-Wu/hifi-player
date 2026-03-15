@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import {
-	ActivityIndicator,
+	Image,
 	PanResponder,
+	Pressable,
 	Text,
 	TouchableOpacity,
 	View,
@@ -11,21 +12,18 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { usePlayer } from "@/contexts/player-context";
 import { MinMax } from "@/utils";
 import { useRouter } from "expo-router";
+import { PausePlayButton } from "./pause-play-button";
 
 export function PlayerControls() {
 	const {
 		currentTrack,
-		isPlaying,
-		isLoading,
 		position,
 		duration,
-		play,
-		pause,
 		next,
 		previous,
 		seek,
 		currentIndex,
-		queue
+		queue,
 	} = usePlayer();
 
 	const router = useRouter();
@@ -60,13 +58,21 @@ export function PlayerControls() {
 			},
 			onPanResponderMove: (_evt, gestureState) => {
 				if (!barWidthRef.current) return;
-				const ratio = MinMax(0, 1, startRatioRef.current + gestureState.dx / barWidthRef.current);
+				const ratio = MinMax(
+					0,
+					1,
+					startRatioRef.current + gestureState.dx / barWidthRef.current,
+				);
 				scrubRatioRef.current = ratio;
 				setScrubRatio(ratio);
 			},
 			onPanResponderRelease: (_evt, gestureState) => {
 				if (!barWidthRef.current || !durationRef.current) return;
-				const ratio = MinMax(0, 1, startRatioRef.current + gestureState.dx / barWidthRef.current);
+				const ratio = MinMax(
+					0,
+					1,
+					startRatioRef.current + gestureState.dx / barWidthRef.current,
+				);
 				seekRef.current(ratio * durationRef.current);
 				setScrubRatio(ratio);
 				setIsScrubbing(false);
@@ -122,10 +128,7 @@ export function PlayerControls() {
 			</View>
 
 			<View className="flex-row items-center gap-[10px] px-3 py-2">
-				<img
-					src={currentTrack.artwork}
-					className="h-11 w-11 rounded-md"
-				/>
+				<Image source={{ uri: currentTrack.artwork }} className="h-11 w-11 rounded-md" />
 				<View className="flex-1 gap-0.5">
 					<Text
 						className="text-sm font-semibold tracking-tight text-foreground"
@@ -133,9 +136,11 @@ export function PlayerControls() {
 					>
 						{currentTrack.title}
 					</Text>
-					<Text className="text-xs text-muted" numberOfLines={1}>
-						<button	onClick={() => router.push(`/artist/${currentTrack.artist.id}`)}>{currentTrack.artist.name}</button>
-					</Text>
+					<View className="text-xs text-muted">
+						<Pressable onPress={() => router.push(`/artist/${currentTrack.artist.id}`)}>
+							<Text>{currentTrack.artist.name}</Text>
+						</Pressable>
+					</View>
 				</View>
 
 				<Text className="text-[11px] text-muted">
@@ -148,31 +153,31 @@ export function PlayerControls() {
 						onPress={previous}
 						hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
 					>
-						<IconSymbol name="backward.fill" size={18} color={currentIndex === 0 ? "var(--color-muted)" : "var(--color-foreground)"} />
+						<IconSymbol
+							name="backward.fill"
+							size={18}
+							color={
+								currentIndex === 0 ? "var(--color-muted)" : "var(--color-foreground)"
+							}
+						/>
 					</TouchableOpacity>
 
-					<TouchableOpacity
-						onPress={isPlaying ? pause : play}
-						disabled={isLoading}
-						className="h-9 w-9 items-center justify-center rounded-full bg-foreground"
-					>
-						{isLoading ? (
-							<ActivityIndicator size="small" color="var(--color-background)" />
-						) : (
-							<IconSymbol
-								name={isPlaying ? "pause.fill" : "play.fill"}
-								size={20}
-								color="var(--color-background)"
-							/>
-						)}
-					</TouchableOpacity>
+					<PausePlayButton />
 
 					<TouchableOpacity
 						disabled={currentIndex === queue.length - 1}
 						onPress={next}
 						hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
 					>
-						<IconSymbol name="forward.fill" size={18} color={currentIndex === queue.length - 1 ? "var(--color-muted)" : "var(--color-foreground)"} />
+						<IconSymbol
+							name="forward.fill"
+							size={18}
+							color={
+								currentIndex === queue.length - 1
+									? "var(--color-muted)"
+									: "var(--color-foreground)"
+							}
+						/>
 					</TouchableOpacity>
 				</View>
 			</View>
