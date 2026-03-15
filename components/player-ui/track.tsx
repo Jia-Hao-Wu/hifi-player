@@ -58,7 +58,7 @@ export function Track({ track, showImage = false, index }: TrackProps) {
 								name={
 									currentTrack?.id === track.id && isPlaying ? "pause.fill" : "play.fill"
 								}
-								color="var(--color-foreground)"
+								color="white"
 							/>
 						</View>
 					</View>

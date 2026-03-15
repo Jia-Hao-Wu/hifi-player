@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { MarqueeText } from "@/components/ui/marquee-text";
 import { usePlayer } from "@/contexts/player-context";
 import { MinMax } from "@/utils";
 import { useRouter } from "expo-router";
@@ -130,12 +131,10 @@ export function PlayerControls() {
 			<View className="flex-row items-center gap-[10px] px-3 py-2">
 				<Image source={{ uri: currentTrack.artwork }} className="h-11 w-11 rounded-md" />
 				<View className="flex-1 gap-0.5">
-					<Text
+					<MarqueeText
+						text={currentTrack.title}
 						className="text-sm font-semibold tracking-tight text-foreground"
-						numberOfLines={1}
-					>
-						{currentTrack.title}
-					</Text>
+					/>
 					<View className="text-xs text-muted">
 						<Pressable onPress={() => router.push(`/artist/${currentTrack.artist.id}`)}>
 							<Text>{currentTrack.artist.name}</Text>

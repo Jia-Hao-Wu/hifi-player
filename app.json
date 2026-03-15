@@ -10,7 +10,17 @@
       "package": "com.fushl.hifimusicplayer"
     },
     "plugins": [
-      "expo-audio"
-    ]
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "ios": {
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"]
+      }
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from "expo-audio";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import React, {
 	createContext,
@@ -11,6 +12,8 @@ import React, {
 
 import { getTrackStream } from "@/api";
 import { Track } from "@/constants/tracks";
+
+const STORAGE_KEY = "player_queue";
 
 interface PlayerContextType {
 	currentIndex: number;
@@ -29,6 +32,7 @@ interface PlayerContextType {
 	previous: () => Promise<void>;
 	seek: (positionSeconds: number) => Promise<void>;
 	loadTrack: (track: Track) => Promise<void>;
+	toggleLoop: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
@@ -38,7 +42,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [isLoading, setIsLoading] = useState(false);
 	const [wantsToPlay, setWantsToPlay] = useState(false);
+	const [loop, setLoop] = useState(false);
 	const [currentListId, setCurrentListId] = useState<string>();
+	const [restored, setRestored] = useState(false);
 
 	const player = useAudioPlayer(null);
 	const status = useAudioPlayerStatus(player);
@@ -57,9 +63,55 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		setAudioModeAsync({
 			playsInSilentMode: true,
+			shouldPlayInBackground: true,
 			interruptionMode: "duckOthers",
 		});
 	}, []);
+
+	// Restore queue from storage on mount
+	useEffect(() => {
+		AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
+			if (raw) {
+				try {
+					const {
+						queue: savedQueue,
+						currentIndex: savedIndex,
+						currentListId: savedListId,
+					} = JSON.parse(raw);
+					if (Array.isArray(savedQueue) && savedQueue.length > 0) {
+						setQueue(savedQueue);
+						setCurrentIndex(savedIndex ?? 0);
+						setCurrentListId(savedListId);
+					}
+				} catch {}
+			}
+			setRestored(true);
+		});
+	}, []);
+
+	// Persist queue to storage on changes
+	useEffect(() => {
+		if (!restored) return;
+		AsyncStorage.setItem(
+			STORAGE_KEY,
+			JSON.stringify({ queue, currentIndex, currentListId }),
+		);
+	}, [queue, currentIndex, currentListId, restored]);
+
+	// Update lock screen / notification media controls
+	useEffect(() => {
+		const track = queue[currentIndex];
+		if (!track) {
+			player.clearLockScreenControls();
+			return;
+		}
+		player.setActiveForLockScreen(true, {
+			title: track.title,
+			artist: track.artist.name,
+			albumTitle: track.album,
+			artworkUrl: track.artwork,
+		});
+	}, [player, queue, currentIndex]);
 
 	// Deferred play: wait for player to be loaded before playing
 	useEffect(() => {
@@ -118,7 +170,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
 	const enQueue = async (track: Track) => {
 		const currentTrack = queue[currentIndex] ?? null;
-		
+
 		if (track.id === currentTrack?.id) {
 			return !player.paused ? pause() : play();
 		}
@@ -141,6 +193,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		const subscription = player.addListener("playbackStatusUpdate", (s) => {
 			if (s.didJustFinish && queue.length > 0) {
 				const nextIndex = (currentIndexRef.current + 1) % queue.length;
+
+				if (currentIndexRef.current === queue.length - 1 && !loop) return;
+
 				setCurrentIndex(nextIndex);
 				loadSoundAt(nextIndex, true);
 			}
@@ -149,10 +204,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	}, [player, queue.length, loadSoundAt]);
 
 	useEffect(() => {
-		if (queue.length > 0) {
-			loadSoundAt(0, false);
+		if (restored && queue.length > 0) {
+			loadSoundAt(currentIndex, false);
 		}
-	}, []);
+	}, [restored]);
 
 	const play = useCallback(async () => {
 		if (status.isLoaded) {
@@ -200,7 +255,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		},
 		[queue, loadSoundAt],
 	);
-	
+
+	const toggleLoop = useCallback(() => {
+		setLoop(previous => !previous);
+	}, []);
+
 	return (
 		<PlayerContext.Provider
 			value={{
@@ -220,6 +279,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				seek,
 				loadTrack,
 				enQueue,
+				toggleLoop
 			}}
 		>
 			{children}
