@@ -1,8 +1,7 @@
 import {
 	useAudioPlaylist,
 	useAudioPlaylistStatus,
-	setAudioModeAsync,
-	AudioPlaylist
+	setAudioModeAsync
 } from "expo-audio";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -18,7 +17,14 @@ import React, {
 import { getTrackStream } from "@/api";
 import { Track } from "@/constants/tracks";
 
-const STORAGE_KEY = "player_queue";
+const STORAGE_KEY = "player_state";
+
+interface SavedState {
+	tracks: Track[];
+	currentIndex: number;
+	position: number;
+	currentListId?: string;
+}
 
 async function resolveUri(track: Track): Promise<string | null> {
 	if (track.uri) return track.uri;
@@ -59,6 +65,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	const resolvedUpTo = useRef(-1);
 	const trackListRef = useRef<Track[]>([]);
 	const queueGeneration = useRef(0);
+	const restoredRef = useRef(false);
 
 	const playlist = useAudioPlaylist({ loop: "none" });
 	const status = useAudioPlaylistStatus(playlist);
@@ -69,6 +76,64 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 			shouldPlayInBackground: true,
 			interruptionMode: "duckOthers",
 		});
+	}, []);
+
+	// Save state when track or position changes
+	useEffect(() => {
+		if (!restoredRef.current) return;
+		if (trackListRef.current.length === 0) return;
+
+		const state: SavedState = {
+			tracks: trackListRef.current,
+			currentIndex: status.currentIndex,
+			position: status.currentTime,
+			currentListId,
+		};
+		
+		AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+	}, [status.currentIndex, Math.floor(status.currentTime / 5), currentListId]);
+
+	// Restore state on mount
+	useEffect(() => {
+		(async () => {
+			try {
+				const raw = await AsyncStorage.getItem(STORAGE_KEY);
+				
+				if (!raw) return restoredRef.current = true;
+
+				const saved: SavedState = JSON.parse(raw);
+
+				if (!saved.tracks?.length) return restoredRef.current = true;
+
+				const generation = ++queueGeneration.current;
+				setTrackList(saved.tracks);
+				trackListRef.current = saved.tracks;
+				setCurrentListId(saved.currentListId);
+				setIsLoading(true);
+
+				// Resolve only the saved track so UI is available immediately
+				const savedTrack = saved.tracks[saved.currentIndex];
+				if (!savedTrack) { restoredRef.current = true; setIsLoading(false); return; }
+
+				const uri = await resolveUri(savedTrack);
+				if (!uri || generation !== queueGeneration.current) { restoredRef.current = true; setIsLoading(false); return; }
+
+				playlist.add({ uri, name: savedTrack.title });
+				resolvedUpTo.current = saved.currentIndex;
+
+				if (saved.position > 0) await playlist.seekTo(saved.position);
+
+				setIsLoading(false);
+				restoredRef.current = true;
+
+				// Resolve remaining tracks in the background (before and after saved index)
+				await resolveAndAdd(saved.tracks, 0, saved.currentIndex - 1, generation);
+				await resolveAndAdd(saved.tracks, saved.currentIndex + 1, saved.tracks.length - 1, generation);
+			} catch {
+				restoredRef.current = true;
+				setIsLoading(false);
+			}
+		})();
 	}, []);
 
 	const resolveAndAdd = async (tracks: Track[], from: number, to: number, generation: number) => {
@@ -90,6 +155,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		}
 
 		const generation = ++queueGeneration.current;
+		restoredRef.current = true;
 		setCurrentListId(listId);
 		setIsLoading(true);
 		playlist.clear();
@@ -130,20 +196,31 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
 		// Cancel any in-flight background resolution from replaceQueue
 		++queueGeneration.current;
+		restoredRef.current = true;
+
+		// Remove existing duplicate from the playlist if present
+		const existingIndex = trackListRef.current
+			.slice(0, playlist.trackCount)
+			.findIndex((t) => t.id === track.id);
+
+		if (existingIndex !== -1) playlist.remove(existingIndex);
+
 		const newIndex = playlist.trackCount;
 		setCurrentListId(undefined);
-		// Truncate trackList to only resolved tracks so indices stay aligned
-		// with the actual playlist, then append the enqueued track
+
 		setTrackList((prev) => {
-			const next = [...prev.slice(0, newIndex), track];
+			const truncated = prev.slice(0, existingIndex !== -1 ? playlist.trackCount : newIndex);
+			const filtered = truncated.filter((t) => t.id !== track.id);
+			const next = [...filtered, track];
 			trackListRef.current = next;
 			return next;
 		});
-		resolvedUpTo.current = newIndex;
+
+		resolvedUpTo.current = playlist.trackCount;
 
 		playlist.add({ uri, name: track.title });
-		playlist.skipTo(newIndex);
-		playlist.play();
+		playlist.skipTo(playlist.trackCount - 1);
+		playlist.pause();
 	};
 
 	const play = useCallback(async () => {
