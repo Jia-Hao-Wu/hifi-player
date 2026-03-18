@@ -36,22 +36,26 @@ export function PlayerControls() {
 	const durationRef = useRef(duration);
 	const seekRef = useRef(seek);
 	const scrubRatioRef = useRef(0);
+	const progressRef = useRef(0);
 	durationRef.current = duration;
 	seekRef.current = seek;
 
 	const progress = duration > 0 ? position / duration : 0;
+	progressRef.current = progress;
 	const displayProgress = isScrubbing ? scrubRatio : progress;
 	const displayPosition = isScrubbing ? scrubRatio * duration : position;
 
 	const startRatioRef = useRef(0);
+	const scrubTimeout = useRef<ReturnType<typeof setTimeout>>();
 
 	const panResponder = useRef(
 		PanResponder.create({
 			onStartShouldSetPanResponder: () => true,
 			onMoveShouldSetPanResponder: () => true,
-			onPanResponderGrant: (evt) => {
+			onPanResponderGrant: () => {
 				if (!barWidthRef.current) return;
-				const ratio = MinMax(0, 1, evt.nativeEvent.locationX / barWidthRef.current);
+				if (scrubTimeout.current) clearTimeout(scrubTimeout.current);
+				const ratio = progressRef.current;
 				startRatioRef.current = ratio;
 				scrubRatioRef.current = ratio;
 				setIsScrubbing(true);
@@ -76,13 +80,13 @@ export function PlayerControls() {
 				);
 				seekRef.current(ratio * durationRef.current);
 				setScrubRatio(ratio);
-				setIsScrubbing(false);
+				scrubTimeout.current = setTimeout(() => setIsScrubbing(false), 250);
 			},
 			onPanResponderTerminate: () => {
 				if (durationRef.current) {
 					seekRef.current(scrubRatioRef.current * durationRef.current);
 				}
-				setIsScrubbing(false);
+				scrubTimeout.current = setTimeout(() => setIsScrubbing(false), 250);
 			},
 		}),
 	).current;

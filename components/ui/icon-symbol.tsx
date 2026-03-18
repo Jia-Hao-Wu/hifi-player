@@ -27,6 +27,11 @@ const MAPPING = {
 	"forward.fill": "skip-next",
 	"backward.fill": "skip-previous",
 	"magnifyingglass": "search",
+	"list.bullet": "queue-music",
+	"chevron.up": "expand-less",
+	"chevron.down": "expand-more",
+	"xmark": "close",
+	"line.3.horizontal": "drag-handle",
 } as IconMapping;
 
 /**

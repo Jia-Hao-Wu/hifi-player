@@ -54,6 +54,10 @@ interface PlayerContextType {
 	previous: () => Promise<void>;
 	seek: (positionSeconds: number) => Promise<void>;
 	toggleLoop: () => void;
+	trackList: Track[];
+	moveTrack: (fromIndex: number, toIndex: number) => Promise<void>;
+	removeTrack: (index: number) => void;
+	jumpTo: (index: number) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
@@ -62,7 +66,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	const [isLoading, setIsLoading] = useState(false);
 	const [currentListId, setCurrentListId] = useState<string>();
 	const [trackList, setTrackList] = useState<Track[]>([]);
-	const resolvedUpTo = useRef(-1);
+	const resolvedUris = useRef(new Map<string, string>());
 	const trackListRef = useRef<Track[]>([]);
 	const queueGeneration = useRef(0);
 	const restoredRef = useRef(false);
@@ -118,17 +122,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				const uri = await resolveUri(savedTrack);
 				if (!uri || generation !== queueGeneration.current) { restoredRef.current = true; setIsLoading(false); return; }
 
+				resolvedUris.current.set(savedTrack.id, uri);
 				playlist.add({ uri, name: savedTrack.title });
-				resolvedUpTo.current = saved.currentIndex;
 
 				if (saved.position > 0) await playlist.seekTo(saved.position);
 
 				setIsLoading(false);
 				restoredRef.current = true;
 
-				// Resolve remaining tracks in the background (before and after saved index)
-				await resolveAndAdd(saved.tracks, 0, saved.currentIndex - 1, generation);
+				// Resolve remaining tracks in the background (after saved index first, then before)
 				await resolveAndAdd(saved.tracks, saved.currentIndex + 1, saved.tracks.length - 1, generation);
+				await resolveAndAdd(saved.tracks, 0, saved.currentIndex - 1, generation);
 			} catch {
 				restoredRef.current = true;
 				setIsLoading(false);
@@ -139,11 +143,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	const resolveAndAdd = async (tracks: Track[], from: number, to: number, generation: number) => {
 		for (let i = from; i <= to && i < tracks.length; i++) {
 			if (generation !== queueGeneration.current) return;
-			if (i <= resolvedUpTo.current) continue;
+			if (resolvedUris.current.has(tracks[i].id)) continue;
 			const uri = await resolveUri(tracks[i]);
 			if (uri && generation === queueGeneration.current) {
+				resolvedUris.current.set(tracks[i].id, uri);
 				playlist.add({ uri, name: tracks[i].title });
-				resolvedUpTo.current = i;
 			}
 		}
 	};
@@ -159,7 +163,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		setCurrentListId(listId);
 		setIsLoading(true);
 		playlist.clear();
-		resolvedUpTo.current = -1;
+		resolvedUris.current.clear();
 		setTrackList(tracks);
 		trackListRef.current = tracks;
 
@@ -175,8 +179,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 			return;
 		}
 
+		resolvedUris.current.set(tracks[0].id, firstUri);
 		playlist.add({ uri: firstUri, name: tracks[0].title });
-		resolvedUpTo.current = 0;
 		playlist.play();
 		setIsLoading(false);
 
@@ -191,36 +195,89 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 			return playlist.playing ? playlist.pause() : playlist.play();
 		}
 
-		const uri = await resolveUri(track);
-		if (!uri) return;
+		// Use cached URI or resolve fresh
+		let uri = resolvedUris.current.get(track.id);
+		if (!uri) {
+			const resolved = await resolveUri(track);
+			if (!resolved) return;
+			uri = resolved;
+		}
+		resolvedUris.current.set(track.id, uri);
 
-		// Cancel any in-flight background resolution from replaceQueue
+		// Cancel any in-flight background resolution
 		++queueGeneration.current;
 		restoredRef.current = true;
 
-		// Remove existing duplicate from the playlist if present
-		const existingIndex = trackListRef.current
-			.slice(0, playlist.trackCount)
-			.findIndex((t) => t.id === track.id);
+		// Remove existing duplicate from the audio playlist
+		const existingIndex = trackListRef.current.findIndex((t) => t.id === track.id);
+		if (existingIndex !== -1 && existingIndex < playlist.trackCount) {
+			playlist.remove(existingIndex);
+		}
 
-		if (existingIndex !== -1) playlist.remove(existingIndex);
-
-		const newIndex = playlist.trackCount;
 		setCurrentListId(undefined);
 
 		setTrackList((prev) => {
-			const truncated = prev.slice(0, existingIndex !== -1 ? playlist.trackCount : newIndex);
-			const filtered = truncated.filter((t) => t.id !== track.id);
-			const next = [...filtered, track];
+			const next = [...prev.filter((t) => t.id !== track.id), track];
 			trackListRef.current = next;
 			return next;
 		});
 
-		resolvedUpTo.current = playlist.trackCount;
-
 		playlist.add({ uri, name: track.title });
 		playlist.skipTo(playlist.trackCount - 1);
-		playlist.pause();
+		playlist.play();
+	};
+
+	const moveTrack = async (fromIndex: number, toIndex: number) => {
+		if (fromIndex === toIndex) return;
+		const prev = trackListRef.current;
+		if (fromIndex < 0 || toIndex < 0 || fromIndex >= prev.length || toIndex >= prev.length) return;
+
+		++queueGeneration.current;
+
+		const next = [...prev];
+		const [moved] = next.splice(fromIndex, 1);
+		next.splice(toIndex, 0, moved);
+
+		const wasPlaying = status.playing;
+		const currentTime = status.currentTime;
+		const currentTrackId = prev[status.currentIndex]?.id;
+
+		setTrackList(next);
+		trackListRef.current = next;
+
+		playlist.clear();
+		for (const track of next) {
+			const uri = resolvedUris.current.get(track.id);
+			if (uri) playlist.add({ uri, name: track.title });
+		}
+
+		if (currentTrackId) {
+			const newIndex = next.findIndex(t => t.id === currentTrackId);
+			if (newIndex !== -1) {
+				playlist.skipTo(newIndex);
+				if (currentTime > 0) await playlist.seekTo(currentTime);
+				if (wasPlaying) playlist.play();
+			}
+		}
+	};
+
+	const removeTrack = (index: number) => {
+		const prev = trackListRef.current;
+		if (index < 0 || index >= prev.length) return;
+
+		const next = prev.filter((_, i) => i !== index);
+		setTrackList(next);
+		trackListRef.current = next;
+
+		if (index < playlist.trackCount) {
+			playlist.remove(index);
+		}
+	};
+
+	const jumpTo = (index: number) => {
+		if (index < 0 || index >= trackListRef.current.length) return;
+		playlist.skipTo(index);
+		playlist.play();
 	};
 
 	const play = useCallback(async () => {
@@ -274,7 +331,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				previous,
 				seek,
 				enQueue,
-				toggleLoop
+				toggleLoop,
+				trackList,
+				moveTrack,
+				removeTrack,
+				jumpTo,
 			}}
 		>
 			{children}

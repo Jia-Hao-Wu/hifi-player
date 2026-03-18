@@ -40,6 +40,15 @@ export default function TabLayout() {
 					),
 				}}
 			/>
+			<Tabs.Screen
+				name="queue"
+				options={{
+					title: "Queue",
+					tabBarIcon: ({ color }) => (
+						<IconSymbol size={28} name="list.bullet" color={color} />
+					),
+				}}
+			/>
 			<Tabs.Screen name="album/[id]" options={{ href: null }} />
 			<Tabs.Screen name="artist/[id]" options={{ href: null }} />
 			<Tabs.Screen name="playlist/[id]" options={{ href: null }} />
