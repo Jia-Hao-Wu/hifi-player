@@ -17,5 +17,18 @@ module.exports = {
 			},
 		},
 	},
-	plugins: [],
+	plugins: [
+		({ addBase }: { addBase: Function }) =>
+			addBase({
+				":root": {
+					"--color-foreground": "#000",
+					"--color-background": "#fff",
+					"--color-muted": "#adadad",
+					"--color-player-surface": "#f5f5f5",
+					"--color-player-border": "#e5e5e5",
+					"--color-accent": "#86ff9633",
+					"--color-accent-2": "rgba(231, 91, 91, 0.075)",
+				},
+			}),
+	],
 };

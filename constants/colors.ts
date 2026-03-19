@@ -1,0 +1,22 @@
+import { vars } from "nativewind";
+
+export const themes = {
+	light: vars({
+		"--color-foreground": "#000",
+		"--color-background": "#fff",
+		"--color-muted": "#adadad",
+		"--color-player-surface": "#f5f5f5",
+		"--color-player-border": "#e5e5e5",
+		"--color-accent": "#86ff9633",
+		"--color-accent-2": "rgba(231, 91, 91, 0.075)",
+	}),
+	dark: vars({
+		"--color-foreground": "#fff",
+		"--color-background": "#161616",
+		"--color-muted": "#a3a3a3",
+		"--color-player-surface": "#1d1d1d",
+		"--color-player-border": "#1a1a1a",
+		"--color-accent": "#d800001e",
+		"--color-accent-2": "#0070d833",
+	}),
+};
