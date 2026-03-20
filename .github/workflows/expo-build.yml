@@ -49,7 +49,7 @@ jobs:
 
       - name: Build (push to main)
         if: github.event_name == 'push'
-        run: eas build --platform all --profile production --non-interactive
+        run: eas build --platform android --profile production --non-interactive
 
       - name: Build (manual)
         if: github.event_name == 'workflow_dispatch'
