@@ -12,6 +12,7 @@ import "../global.css";
 import { themes } from "@/constants/colors";
 import { AddToPlaylistProvider } from "@/components/add-to-playlist-modal";
 import { PlayerProvider } from "@/contexts/player-context";
+import { FavoritesProvider } from "@/contexts/favorites-storage";
 import { PlaylistStorageProvider } from "@/contexts/playlist-storage";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
@@ -30,6 +31,7 @@ export default function RootLayout() {
 				<View style={[{ flex: 1 }, themes[(colorScheme === "dark" ? "dark" : "light")]]}>
 					<QueryClientProvider client={queryClient}>
 						<PlayerProvider>
+							<FavoritesProvider>
 							<PlaylistStorageProvider>
 								<AddToPlaylistProvider>
 									<ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -46,6 +48,7 @@ export default function RootLayout() {
 									</ThemeProvider>
 								</AddToPlaylistProvider>
 							</PlaylistStorageProvider>
+							</FavoritesProvider>
 						</PlayerProvider>
 					</QueryClientProvider>
 				</View>

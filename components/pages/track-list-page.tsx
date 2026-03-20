@@ -1,6 +1,8 @@
-import { Image, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { ARTWORK_SIZES, artworkUrl } from "@/api/images";
 import { usePlayer } from "@/contexts/player-context";
+import { useFavorites } from "@/contexts/favorites-storage";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { TrackMeta } from "@/api/metadata";
 import { Track } from "../player-ui/track";
 import { PausePlayButton } from "../player-ui/pause-play-button";
@@ -9,6 +11,7 @@ import { BackHeader } from "../ui/back-header";
 type TrackListPageProps = {
 	title: string;
 	id: string;
+	type: "album" | "playlist";
 	subtitle?: string;
 	image: string | undefined;
 	tracks: { item: TrackMeta }[];
@@ -17,12 +20,15 @@ type TrackListPageProps = {
 export function TrackListPage({
 	title,
 	id,
+	type,
 	subtitle,
 	image,
 	tracks,
 }: TrackListPageProps) {
 	const { isPlaying, replaceQueue, currentListId } =
 		usePlayer();
+	const { isFavorite, toggleFavorite } = useFavorites();
+	const liked = isFavorite(id);
 
 	return (
 		<ScrollView className="flex flex-1 flex-col bg-background">
@@ -40,7 +46,7 @@ export function TrackListPage({
 					<Text className="text-base text-foreground font-medium">{title}</Text>
 					{subtitle && <Text className="text-xs text-muted">{subtitle}</Text>}
 				</View>
-				<View className="mt-5">
+				<View className="mt-5 flex-row items-center gap-4">
 					<PausePlayButton
 						isPlaying={isPlaying && id === currentListId}
 						onPress={() => {
@@ -61,6 +67,16 @@ export function TrackListPage({
 							);
 						}}
 					/>
+					<Pressable
+						onPress={() => toggleFavorite({ id, type, title, image, subtitle })}
+						hitSlop={8}
+					>
+						<IconSymbol
+							name={liked ? "heart.fill" : "heart"}
+							size={15}
+							className="text-red-500"
+						/>
+					</Pressable>
 				</View>
 			</View>
 

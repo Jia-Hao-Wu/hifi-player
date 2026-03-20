@@ -28,7 +28,11 @@ const MAPPING = {
 	"line.3.horizontal": "drag-handle",
 	"music.note.list": "library-music",
 	"shuffle": "shuffle",
-	"plus": "add"
+	"plus": "add",
+	"trash": "delete",
+	"heart": "favorite-outline",
+	"heart.fill": "favorite",
+	"heart.slash": "dnd-forwardslash"
 } as IconMapping;
 
 

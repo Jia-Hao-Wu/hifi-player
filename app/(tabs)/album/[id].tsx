@@ -31,6 +31,7 @@ export default function AlbumPage() {
 	return (
 		<TrackListPage
 			title={album.title ?? title ?? "Album"}
+			type="album"
 			subtitle={album.releaseDate.slice(0, 4)}
 			image={album.cover ?? image}
 			tracks={album.items}

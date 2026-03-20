@@ -30,6 +30,7 @@ export default function PlaylistPage() {
 	return (
 		<TrackListPage
 			title={playlist.title ?? title ?? "Playlist"}
+			type="playlist"
 			subtitle={playlist ? `${playlist.numberOfTracks} tracks` : undefined}
 			image={playlist.squareImage ?? playlist.image ?? image}
 			tracks={items ?? []}
