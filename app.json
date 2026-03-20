@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Music Player",
-    "slug": "music-player",
+    "slug": "hifi-music-player",
     "extra": {
       "eas": {
         "projectId": "66cf61a2-a6eb-4a1d-8dd2-d4ca818e6248"
