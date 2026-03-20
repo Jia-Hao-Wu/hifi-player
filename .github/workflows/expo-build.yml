@@ -55,13 +55,10 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: eas build --platform ${{ inputs.platform }} --profile ${{ inputs.profile }} --non-interactive
 
-  submit:
-    name: Submit to stores
+  release:
+    name: Create GitHub Release
     needs: build
     runs-on: ubuntu-latest
-    if: >-
-      (github.event_name == 'push') ||
-      (github.event_name == 'workflow_dispatch' && inputs.profile == 'production')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -81,5 +78,25 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Submit to stores
-        run: eas submit --platform all --latest --non-interactive
+      - name: Download build artifact
+        run: |
+          eas build:list --platform android --status finished --limit 1 --json | \
+            jq -r '.[0].artifacts.buildUrl' > build_url.txt
+          curl -L -o app.apk "$(cat build_url.txt)"
+
+      - name: Get version from app.json
+        id: version
+        run: |
+          VERSION=$(jq -r '.expo.version // "0.0.0"' app.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION-build.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            app.apk \
+            --title "Build ${{ steps.version.outputs.tag }}" \
+            --notes "Automated build from commit ${{ github.sha }}" \
+            --latest
