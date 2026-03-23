@@ -95,8 +95,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		setAudioModeAsync({
 			playsInSilentMode: true,
-			shouldPlayInBackground: true,
-			interruptionMode: "duckOthers",
+      shouldPlayInBackground: true,
+      interruptionMode: 'doNotMix',
 		});
 	}, []);
 
@@ -324,6 +324,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	const play = useCallback(async () => {
+
+
+		// playlist.setActiveForLockScreen(true, {
+		// 	title: 'My Audio Title',
+		// 	artist: 'Artist Name',
+		// 	albumTitle: 'Album Name',
+		// 	artworkUrl: 'https://example.com/artwork.jpg', // optional
+		// });
+
 		playlist.play();
 	}, [playlist]);
 

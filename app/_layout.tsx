@@ -7,6 +7,10 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import "react-native-reanimated";
 
+if (__DEV__) {
+	require("../reactotron.config");
+}
+
 import "../global.css";
 
 import { themes } from "@/constants/colors";
