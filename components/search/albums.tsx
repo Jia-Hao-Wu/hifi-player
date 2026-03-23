@@ -32,18 +32,21 @@ export function Albums({ query, onEndReachedRef }: AlbumsProps) {
 
 	return (
 		<View className="grid grid-cols-2 gap-4 p-4">
-			{data.items.map((album, index) => (
-				<MediaCard
-					key={`${album.id}-${index}`}
-					className="gap-3 p-4 bg-accent-2 rounded-lg"
-					image={album.cover}
-					title={album.title}
-					onPress={() => router.push({ pathname: "/album/[id]", params: { id: String(album.id), title: album.title, image: album.cover } })}
-				>
-					<Text className="text-[10px] text-muted" numberOfLines={1}>{album.artists.map((artist) => artist.name).join(", ")}</Text>
-					<Text className="text-[10px] text-muted">{album.numberOfTracks} tracks</Text>
-				</MediaCard>
-			))}
+			{data.items.map((album, index) => {
+				if(album.numberOfTracks > 0)
+					return (
+						<MediaCard
+							key={`${album.id}-${index}`}
+							className="gap-3 p-4 bg-accent-2 rounded-lg"
+							image={album.cover}
+							title={album.title}
+							onPress={() => router.push({ pathname: "/album/[id]", params: { id: String(album.id), title: album.title, image: album.cover } })}
+						>
+							<Text className="text-[10px] text-muted" numberOfLines={1}>{album.artists.map((artist) => artist.name).join(", ")}</Text>
+							<Text className="text-[10px] text-muted">{album.numberOfTracks} tracks</Text>
+						</MediaCard>
+					)
+			})}
 		</View>
 	);
 }

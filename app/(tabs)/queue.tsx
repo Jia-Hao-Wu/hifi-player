@@ -17,7 +17,7 @@ import { MarqueeText } from "@/components/ui/marquee-text";
 const ITEM_HEIGHT = 64;
 
 export default function QueueScreen() {
-	const { trackList, currentIndex, moveTrack, removeTrack, jumpTo } = usePlayer();
+	const { trackList, currentIndex, moveTrack, removeTrack, jumpTo, clearQueue } = usePlayer();
 
 	const [scrollEnabled, setScrollEnabled] = useState(true);
 	const activeIndex = useSharedValue(-1);
@@ -34,16 +34,21 @@ export default function QueueScreen() {
 
 	return (
 		<View className="flex-1 bg-background">
-			<View className="px-5 pt-4 pb-2">
-				<Text className="text-lg font-bold text-foreground">Queue</Text>
-				<Text className="text-xs text-muted mt-0.5">
-					{trackList.length} track{trackList.length !== 1 ? "s" : ""}
-				</Text>
+			<View className="flex-row items-center justify-between px-5 pt-4 pb-2">
+				<View>
+					<Text className="text-lg font-bold text-foreground">Queue</Text>
+					<Text className="text-xs text-muted mt-0.5">
+						{trackList.length} track{trackList.length !== 1 ? "s" : ""}
+					</Text>
+				</View>
+				<Pressable onPress={clearQueue} hitSlop={8}>
+					<Text className="text-xs text-muted">Clear</Text>
+				</Pressable>
 			</View>
 			<ScrollView scrollEnabled={scrollEnabled}>
 				{trackList.map((track, index) => (
 					<QueueItem
-						key={track.id}
+						key={`${track.id}-queue`}
 						track={track}
 						index={index}
 						isCurrent={index === currentIndex}

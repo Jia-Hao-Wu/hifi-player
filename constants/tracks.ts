@@ -16,6 +16,7 @@ export interface Track {
 		name: string;
 	};
 	album: string;
+	cover: string;
 	artwork: string;
 	uri?: string; // populated lazily for API tracks; present for local/demo tracks
 	tidalId?: string; // TIDAL track ID — triggers lazy stream resolution when uri is absent
@@ -36,6 +37,7 @@ export function fromSearchTrack(track: TrackMeta): Track {
 			name: "Unknown Artist"
 		},
 		album: track.album?.title ?? "",
+		cover: track.album?.cover,
 		artwork: artworkUrl(track.album?.cover, ARTWORK_SIZES.medium),
 		duration: track.duration,
 		// uri intentionally omitted — resolved lazily

@@ -73,6 +73,7 @@ interface PlayerContextType {
 	moveTrack: (fromIndex: number, toIndex: number) => Promise<void>;
 	removeTrack: (index: number) => void;
 	jumpTo: (index: number) => void;
+	clearQueue: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
@@ -313,6 +314,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		playlist.play();
 	};
 
+	const clearQueue = () => {
+		++queueGeneration.current;
+		playlist.clear();
+		resolvedUris.current.clear();
+		setTrackList([]);
+		trackListRef.current = [];
+		setCurrentListId(undefined);
+	};
+
 	const play = useCallback(async () => {
 		playlist.play();
 	}, [playlist]);
@@ -390,6 +400,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				moveTrack,
 				removeTrack,
 				jumpTo,
+				clearQueue,
 			}}
 		>
 			{children}

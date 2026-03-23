@@ -32,18 +32,21 @@ export function Playlists({ query, onEndReachedRef }: PlaylistsProps) {
 
 	return (
 		<View className="grid grid-cols-2 gap-4 p-4">
-			{data.items.map((playlist, index) => (
-				<MediaCard
-					key={`${playlist.uuid}-${index}`}
-					className="gap-3 p-4 bg-accent rounded-md"
-					image={playlist.squareImage}
-					title={playlist.title}
-					onPress={() => router.push({ pathname: "/playlist/[id]", params: { id: playlist.uuid, title: playlist.title, image: playlist.squareImage } })}
-				>
-					<Text className="text-[10px] text-muted" numberOfLines={1}>{playlist.promotedArtists.map((artist) => artist.name).join(", ")}</Text>
-					<Text className="text-[10px] text-muted">{playlist.numberOfTracks} tracks</Text>
-				</MediaCard>
-			))}
+			{data.items.map((playlist, index) => {
+				if(playlist.numberOfTracks > 0)
+					return (
+						<MediaCard
+							key={`${playlist.uuid}-${index}`}
+							className="gap-3 p-4 bg-accent rounded-md"
+							image={playlist.squareImage}
+							title={playlist.title}
+							onPress={() => router.push({ pathname: "/playlist/[id]", params: { id: playlist.uuid, title: playlist.title, image: playlist.squareImage } })}
+						>
+							<Text className="text-[10px] text-muted" numberOfLines={1}>{playlist.promotedArtists.map((artist) => artist.name).join(", ")}</Text>
+							<Text className="text-[10px] text-muted">{playlist.numberOfTracks} tracks</Text>
+						</MediaCard>
+					)
+			})}
 		</View>
 	);
 }

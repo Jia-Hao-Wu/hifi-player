@@ -41,6 +41,7 @@ export function Recommended() {
 								title: rec.title,
 								artist: rec.artist,
 								album: rec.album.title,
+								cover: rec.album.cover,
 								artwork: artworkUrl(rec.album.cover, ARTWORK_SIZES.medium),
 								duration: rec.duration,
 							})

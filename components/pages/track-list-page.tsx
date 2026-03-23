@@ -59,6 +59,7 @@ export function TrackListPage({
 										name: track.artist.name,
 									},
 									album: track.album?.title,
+									cover: track.album?.cover,
 									artwork: artworkUrl(track.album?.cover, ARTWORK_SIZES.thumbnail),
 									tidalId: track.id,
 									duration: track.duration,

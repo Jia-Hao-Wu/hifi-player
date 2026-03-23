@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -27,9 +27,18 @@ export function Popular() {
 		staleTime: 10 * 60 * 1000,
 	});
 
-	const visible = playlists
-		? showAll ? playlists : playlists.slice(0, GRID_INITIAL)
-		: [];
+	const visible = useMemo(
+		() => {
+			if(playlists) {
+				const p = playlists.filter((p) => p.numberOfTracks > 0);
+				
+				return showAll ? p 	: p.slice(0, GRID_INITIAL);
+			}
+
+			return [];
+		},
+		[playlists, showAll],
+	);
 
 	if (!visible.length) return null;
 
@@ -43,7 +52,7 @@ export function Popular() {
 					<View key={i} className="flex-row gap-3">
 						{row.map((playlist) => (
 							<MediaCard
-								key={playlist.uuid}
+								key={`${playlist.uuid}-popular`}
 								image={playlist.squareImage ?? playlist.image}
 								title={playlist.title}
 								onPress={() => router.push(`/playlist/${playlist.uuid}`)}
