@@ -65,6 +65,7 @@ interface PlayerContextType {
 	next: () => Promise<void>;
 	previous: () => Promise<void>;
 	seek: (positionSeconds: number) => Promise<void>;
+	looping: boolean;
 	toggleLoop: () => void;
 	shuffled: boolean;
 	toggleShuffle: () => void;
@@ -81,6 +82,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	const [currentListId, setCurrentListId] = useState<string>();
 	const [trackList, setTrackList] = useState<Track[]>([]);
 	const [shuffled, setShuffled] = useState(false);
+	const [looping, setLooping] = useState(false);
 	const resolvedUris = useRef(new Map<string, string>());
 	const trackListRef = useRef<Track[]>([]);
 	const queueGeneration = useRef(0);
@@ -348,7 +350,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	);
 
 	const toggleLoop = useCallback(() => {
-		playlist.loop = playlist.loop === "none" ? "all" : "none";
+		setLooping((prev) => {
+			const next = prev ? "none" : "all";
+			requestAnimationFrame(() => {
+				playlist.loop = next;
+			});
+			return !prev;
+		});
 	}, [playlist]);
 
 	const toggleShuffle = useCallback(() => {
@@ -374,6 +382,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				previous,
 				seek,
 				enQueue,
+				looping,
 				toggleLoop,
 				shuffled,
 				toggleShuffle,

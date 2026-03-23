@@ -32,7 +32,8 @@ const MAPPING = {
 	"trash": "delete",
 	"heart": "favorite-outline",
 	"heart.fill": "favorite",
-	"heart.slash": "dnd-forwardslash"
+	"heart.slash": "dnd-forwardslash",
+	"repeat": "loop"
 } as IconMapping;
 
 
