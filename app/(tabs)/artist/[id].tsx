@@ -46,7 +46,10 @@ export default function ArtistPage() {
 		);
 	}
 
-	const { artist, tracks, albums, similarArtists } = data;
+	const { artist, albums, similarArtists } = data;
+	
+	let tracks = data.tracks.sort((a, b) => a.doublePopularity - b.doublePopularity);
+	
 	const visibleTracks = showAllTracks ? tracks : tracks.slice(0, INITIAL_TRACKS);
 	const visibleAlbums = showAllAlbums ? albums : albums.slice(0, INITIAL_ALBUMS);
 
@@ -97,7 +100,7 @@ export default function ArtistPage() {
 								{visibleAlbums.map((album) => (
 									<MediaCard
 										key={album.id}
-										className="gap-2 p-2 bg-orange-950/50"
+										className="gap-2 p-2 bg-gray-500/10"
 										image={album.cover}
 										title={album.title}
 										onPress={() => router.push(`/album/${album.id}`)}

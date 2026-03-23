@@ -6,6 +6,7 @@ import { useScrubber } from "@/contexts/scrubber-context";
 import { PausePlayButton } from "../pause-play-button";
 import { ProgressBar } from "./progress-bar";
 import { formatTime } from "@/utils";
+import { ARTWORK_SIZES, artworkUrl } from "@/api";
 
 export function PlayerModal({
 	visible,

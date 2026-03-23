@@ -36,7 +36,7 @@ export function ProgressBar() {
 
 	return (
 		<View style={{ zIndex: 1 }}>
-			<View className="h-[3px] overflow-hidden rounded-[2px] bg-foreground/20">
+			<View className="h-[3px] overflow-hidden rounded-[2px] bg-background">
 				<View
 					className="h-full rounded-[2px] bg-foreground"
 					style={{ width: `${displayProgress * 100}%` }}
