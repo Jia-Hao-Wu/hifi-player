@@ -26,8 +26,20 @@ interface SavedState {
 	currentListId?: string;
 }
 
+function isUriExpired(uri: string): boolean {
+	try {
+		const token = new URL(uri).searchParams.get("token");
+		if (!token) return true;
+		const epoch = Number(token.split("~")[0]);
+		if (!epoch) return true;
+		return Date.now() / 1000 >= epoch;
+	} catch {
+		return true;
+	}
+}
+
 async function resolveUri(track: Track): Promise<string | null> {
-	if (track.uri) return track.uri;
+	if (track.uri && !isUriExpired(track.uri)) return track.uri;
 	if (track.tidalId) {
 		try {
 			return await getTrackStream(track.tidalId);
