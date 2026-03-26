@@ -16,7 +16,13 @@
     },
     "owner": "fushl",
     "android": {
-      "package": "com.fushl.hifimusicplayer"
+      "package": "com.fushl.hifimusicplayer",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "plugins": [
       [
@@ -34,9 +40,11 @@
     "ios": {
       "infoPlist": {
         "UIBackgroundModes": [
+          "audio",
           "audio"
         ]
-      }
+      },
+      "bundleIdentifier": "com.fushl.hifimusicplayer"
     }
   }
 }
