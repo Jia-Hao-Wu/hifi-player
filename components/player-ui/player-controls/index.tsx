@@ -32,8 +32,8 @@ function PlayerControlsInner() {
 						text={currentTrack.title}
 						className="text-sm font-semibold tracking-tight text-foreground"
 					/>
-					<View>
-						<Pressable onPress={() => router.push(`/artist/${currentTrack.artist.id}`)}>
+					<View className="flex flex-row">
+						<Pressable onPress={() => router.push(`/artist/${currentTrack.artist.id}`)} className="px-3">
 							<Text className="text-xs text-muted">{currentTrack.artist.name}</Text>
 						</Pressable>
 					</View>

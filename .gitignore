@@ -13,6 +13,12 @@ expo-env.d.ts
 
 # Native
 .kotlin/
+*.class
+*.jar
+*.war
+!gradle-wrapper.jar
+build/
+.gradle/
 *.orig.*
 *.jks
 *.p8

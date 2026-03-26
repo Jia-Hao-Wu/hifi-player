@@ -35,6 +35,7 @@ export interface TrackMeta {
 	allowStreaming: boolean;
 	streamReady: boolean;
 	payToStream: boolean;
+	doublePopularity: number;
 	adSupportedStreamReady: boolean;
 	djReady: boolean;
 	stemReady: boolean;

@@ -16,6 +16,12 @@ import React, {
 
 import { getTrackStream } from "@/api";
 import { Track } from "@/constants/tracks";
+import {
+	updateNowPlaying,
+	updatePlaybackState,
+	addMediaControlListener,
+	stop as stopMediaControls,
+} from "@/modules/media-controls";
 
 const STORAGE_KEY = "player_state";
 
@@ -95,8 +101,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		setAudioModeAsync({
 			playsInSilentMode: true,
-			shouldPlayInBackground: true,
-			interruptionMode: "duckOthers",
+      shouldPlayInBackground: true,
+      interruptionMode: 'doNotMix',
 		});
 	}, []);
 
@@ -321,7 +327,66 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		setTrackList([]);
 		trackListRef.current = [];
 		setCurrentListId(undefined);
+		stopMediaControls();
 	};
+
+	// Sync track metadata to lock screen notification
+	const currentTrack = trackList[status.currentIndex] ?? null;
+	useEffect(() => {
+		if (!currentTrack) return;
+		updateNowPlaying({
+			title: currentTrack.title,
+			artist: currentTrack.artist?.name ?? "Unknown Artist",
+			album: currentTrack.album,
+			artworkUrl: currentTrack.artwork,
+			duration: status.duration,
+		});
+	}, [currentTrack?.id, status.duration]);
+
+	// Sync playback state to lock screen notification
+	useEffect(() => {
+		if (!currentTrack) return;
+		updatePlaybackState({
+			isPlaying: status.playing,
+			position: status.currentTime,
+		});
+	}, [status.playing, Math.floor(status.currentTime)]);
+
+	// Handle lock screen / notification control events
+	useEffect(() => {
+		const sub = addMediaControlListener((event) => {
+			switch (event.type) {
+				case "play":
+					playlist.play();
+					break;
+				case "pause":
+					playlist.pause();
+					break;
+				case "next":
+					if (shuffled && trackListRef.current.length > 1) {
+						let rand: number;
+						do {
+							rand = Math.floor(Math.random() * trackListRef.current.length);
+						} while (rand === status.currentIndex);
+						playlist.skipTo(rand);
+					} else {
+						playlist.next();
+					}
+					break;
+				case "previous":
+					if (playlist.currentTime > 3) {
+						playlist.seekTo(0);
+					} else {
+						playlist.previous();
+					}
+					break;
+				case "seekTo":
+					playlist.seekTo(event.position);
+					break;
+			}
+		});
+		return () => sub.remove();
+	}, [playlist, shuffled, status.currentIndex]);
 
 	const play = useCallback(async () => {
 		playlist.play();
@@ -378,7 +443,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		<PlayerContext.Provider
 			value={{
 				currentIndex: status.currentIndex,
-				currentTrack: trackList[status.currentIndex] ?? null,
+				currentTrack,
 				isPlaying: status.playing,
 				isLoading: isLoading || status.isBuffering,
 				position: status.currentTime,
