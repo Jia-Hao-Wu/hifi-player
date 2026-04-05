@@ -48,7 +48,7 @@ export default function QueueScreen() {
 			<ScrollView scrollEnabled={scrollEnabled}>
 				{trackList.map((track, index) => (
 					<QueueItem
-						key={`${track.id}-queue`}
+						key={`${track.id}-${index}`}
 						track={track}
 						index={index}
 						isCurrent={index === currentIndex}

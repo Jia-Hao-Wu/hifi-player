@@ -11,11 +11,12 @@ type Tab = {
 type TabsProps = {
 	tabs: Tab[];
 	defaultIndex?: number;
+	onTabChange?: (index: number) => void;
 };
 
 const END_REACHED_THRESHOLD = 200;
 
-export function Tabs({ tabs, defaultIndex = 0 }: TabsProps) {
+export function Tabs({ tabs, defaultIndex = 0, onTabChange }: TabsProps) {
 	const [activeIndex, setActiveIndex] = useState(defaultIndex);
 
 	const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -32,7 +33,7 @@ export function Tabs({ tabs, defaultIndex = 0 }: TabsProps) {
 				{tabs.map((tab, index) => (
 					<Pressable
 						key={tab.label}
-						onPress={() => setActiveIndex(index)}
+						onPress={() => { setActiveIndex(index); onTabChange?.(index); }}
 						className={`px-4 py-2 border-b-2 -mb-px ${
 							index === activeIndex
 								? "border-foreground"

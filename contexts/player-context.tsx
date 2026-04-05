@@ -111,13 +111,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		if (!restoredRef.current) return;
 		if (trackListRef.current.length === 0) return;
 
+		const idx = status.currentIndex;
+		const tracks = trackListRef.current;
+		const rotated = [...tracks.slice(idx), ...tracks.slice(0, idx)];
+
 		const state: SavedState = {
-			tracks: trackListRef.current,
-			currentIndex: status.currentIndex,
+			tracks: rotated,
+			currentIndex: 0,
 			position: status.currentTime,
 			currentListId,
 		};
-		
+
 		AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 	}, [status.currentIndex, Math.floor(status.currentTime / 5), currentListId]);
 
@@ -183,7 +187,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 			const uri = await resolveUri(tracks[i]);
 			if (uri && generation === queueGeneration.current) {
 				resolvedUris.current.set(tracks[i].id, uri);
-				playlist.add({ uri, name: tracks[i].title });
+				try {
+					playlist.add({ uri, name: tracks[i].title });
+				} catch {
+					return;
+				}
 			}
 		}
 	};
@@ -406,14 +414,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		} else {
 			playlist.next();
 		}
+		playlist.play();
 	}, [playlist, shuffled, status.currentIndex]);
 
 	const previous = useCallback(async () => {
 		if (playlist.currentTime > 3) {
 			await playlist.seekTo(0);
-			return;
+		} else {
+			playlist.previous();
 		}
-		playlist.previous();
+		playlist.play();
 	}, [playlist]);
 
 	const seek = useCallback(

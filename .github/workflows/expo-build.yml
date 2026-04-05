@@ -92,7 +92,7 @@ jobs:
         run: |
           VERSION=$(jq -r '.expo.version // "0.0.0"' app.json)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION-build.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         env:
