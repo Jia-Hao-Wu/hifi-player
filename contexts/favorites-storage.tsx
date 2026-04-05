@@ -5,10 +5,14 @@ const STORAGE_KEY = "favorites";
 
 export interface Favorite {
 	id: string;
-	type: "album" | "playlist";
+	type: "album" | "playlist" | "track";
 	title: string;
 	image?: string;
 	subtitle?: string;
+	tidalId?: string;
+	duration?: number;
+	artist?: { id: string; name: string };
+	album?: string;
 	addedAt: number;
 }
 

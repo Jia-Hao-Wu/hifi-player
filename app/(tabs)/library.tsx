@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Image, Pressable, Text, TextInput, View } from "react-native";
+import { Image, Modal, Pressable, Text, TextInput, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
 	runOnJS,
@@ -15,15 +15,18 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Tabs } from "@/components/ui/tabs";
 import { usePlaylistStorage, type LocalPlaylist } from "@/contexts/playlist-storage";
 import { useFavorites, type Favorite } from "@/contexts/favorites-storage";
+import { usePlayer } from "@/contexts/player-context";
 
 const DELETE_THRESHOLD = -80;
 
 export default function LibraryScreen() {
 	const { playlists, createPlaylist, deletePlaylist } = usePlaylistStorage();
 	const { favorites, toggleFavorite } = useFavorites();
+	const { enQueue } = usePlayer();
 	const router = useRouter();
 	const [isCreating, setIsCreating] = useState(false);
 	const [newName, setNewName] = useState("");
+	const [activeTab, setActiveTab] = useState(0);
 	const inputRef = useRef<TextInput>(null);
 
 	const handleCreate = () => {
@@ -34,66 +37,101 @@ export default function LibraryScreen() {
 		setIsCreating(false);
 	};
 
+	const favTracks = favorites.filter((f) => f.type === "track");
 	const favPlaylists = favorites.filter((f) => f.type === "playlist");
 	const favAlbums = favorites.filter((f) => f.type === "album");
+
+	const allPlaylists = [
+		...playlists.map((p) => ({ kind: "local" as const, id: p.id, name: p.name, data: p })),
+		...favPlaylists.map((f) => ({ kind: "favorite" as const, id: f.id, name: f.title, data: f })),
+	].sort((a, b) => a.name.localeCompare(b.name));
 
 	return (
 		<View className="flex-1 bg-background">
 			<View className="px-5 pt-4 pb-2 flex-row items-center justify-between">
 				<Text className="text-lg font-bold text-foreground">Library</Text>
-				<Pressable
-					onPress={() => {
-						setIsCreating(true);
-						setTimeout(() => inputRef.current?.focus(), 100);
-					}}
-					hitSlop={8}
-				>
-					<IconSymbol name="plus" size={24} className="text-foreground" />
-				</Pressable>
-			</View>
-
-			{isCreating && (
-				<View className="px-5 py-2 flex-row items-center gap-2">
-					<TextInput
-						ref={inputRef}
-						className="flex-1 bg-player-surface rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted"
-						placeholder="Playlist name"
-						value={newName}
-						onChangeText={setNewName}
-						onSubmitEditing={handleCreate}
-						autoFocus
-					/>
-					<Pressable onPress={handleCreate} className="px-3 py-2 rounded-md bg-player-surface">
-						<Text className="text-sm text-foreground">Create</Text>
-					</Pressable>
+				{activeTab === 1 && (
 					<Pressable
 						onPress={() => {
-							setIsCreating(false);
-							setNewName("");
+							setIsCreating(true);
+							setTimeout(() => inputRef.current?.focus(), 100);
 						}}
+						hitSlop={8}
 					>
-						<IconSymbol name="xmark" size={18} className="text-muted" />
+						<IconSymbol name="plus" size={24} className="text-foreground" />
 					</Pressable>
-				</View>
-			)}
+				)}
+			</View>
+
+			<Modal
+				visible={isCreating}
+				transparent
+				animationType="fade"
+				onRequestClose={() => { setIsCreating(false); setNewName(""); }}
+			>
+				<Pressable
+					onPress={() => { setIsCreating(false); setNewName(""); }}
+					className="flex-1 items-center justify-center bg-black/50"
+				>
+					<Pressable
+						onPress={(e) => e.stopPropagation()}
+						className="w-[80%] rounded-2xl bg-player-surface p-5"
+					>
+						<Text className="text-base font-semibold text-foreground mb-3">New Playlist</Text>
+						<TextInput
+							ref={inputRef}
+							className="bg-background rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted"
+							placeholder="Playlist name"
+							value={newName}
+							onChangeText={setNewName}
+							onSubmitEditing={handleCreate}
+							autoFocus
+						/>
+						<View className="flex-row justify-end gap-3 mt-4">
+							<Pressable
+								onPress={() => { setIsCreating(false); setNewName(""); }}
+								className="px-4 py-2 rounded-md"
+							>
+								<Text className="text-sm text-muted">Cancel</Text>
+							</Pressable>
+							<Pressable
+								onPress={handleCreate}
+								className="px-4 py-2 rounded-md bg-foreground"
+							>
+								<Text className="text-sm text-background font-medium">Create</Text>
+							</Pressable>
+						</View>
+					</Pressable>
+				</Pressable>
+			</Modal>
 
 			<Tabs
+				onTabChange={setActiveTab}
 				tabs={[
 					{
-						label: "My Playlists",
+						label: "Tracks",
 						content: (
 							<View>
-								{playlists.length === 0 ? (
+								{favTracks.length === 0 ? (
 									<View className="items-center justify-center py-20">
-										<Text className="text-sm text-muted">No playlists yet</Text>
+										<Text className="text-sm text-muted">No liked tracks</Text>
 									</View>
 								) : (
-									playlists.map((playlist) => (
-										<SwipeablePlaylistRow
-											key={playlist.id}
-											playlist={playlist}
-											onPress={() => router.push(`/local-playlist/${playlist.id}`)}
-											onDelete={() => deletePlaylist(playlist.id)}
+									favTracks.map((fav) => (
+										<FavoriteRow
+											key={fav.id}
+											favorite={fav}
+											onPress={() => enQueue({
+												id: fav.id,
+												tidalId: fav.tidalId ?? fav.id,
+												title: fav.title,
+												artist: fav.artist ?? { id: "", name: fav.subtitle ?? "Unknown Artist" },
+												album: fav.album ?? "",
+												cover: fav.image ?? "",
+												artwork: fav.image ? artworkUrl(fav.image, ARTWORK_SIZES.medium) : "",
+												duration: fav.duration,
+											})}
+											onRemove={() => toggleFavorite(fav)}
 										/>
 									))
 								)}
@@ -104,19 +142,28 @@ export default function LibraryScreen() {
 						label: "Playlists",
 						content: (
 							<View>
-								{favPlaylists.length === 0 ? (
+								{allPlaylists.length === 0 ? (
 									<View className="items-center justify-center py-20">
-										<Text className="text-sm text-muted">No liked playlists</Text>
+										<Text className="text-sm text-muted">No playlists yet</Text>
 									</View>
 								) : (
-									favPlaylists.map((fav) => (
-										<FavoriteRow
-											key={fav.id}
-											favorite={fav}
-											onPress={() => router.push(`/playlist/${fav.id}?title=${encodeURIComponent(fav.title)}&image=${encodeURIComponent(fav.image ?? "")}`)}
-											onRemove={() => toggleFavorite(fav)}
-										/>
-									))
+									allPlaylists.map((item) =>
+										item.kind === "local" ? (
+											<SwipeablePlaylistRow
+												key={`local-${item.id}`}
+												playlist={item.data}
+												onPress={() => router.push(`/local-playlist/${item.id}`)}
+												onDelete={() => deletePlaylist(item.id)}
+											/>
+										) : (
+											<FavoriteRow
+												key={`fav-${item.id}`}
+												favorite={item.data}
+												onPress={() => router.push(`/playlist/${item.id}?title=${encodeURIComponent(item.data.title)}&image=${encodeURIComponent(item.data.image ?? "")}`)}
+												onRemove={() => toggleFavorite(item.data)}
+											/>
+										)
+									)
 								)}
 							</View>
 						),

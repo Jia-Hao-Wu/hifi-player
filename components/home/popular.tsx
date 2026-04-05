@@ -20,7 +20,7 @@ export function Popular() {
 	const [showAll, setShowAll] = useState(false);
 	const router = useRouter();
 
-	const { data: playlists, isLoading } = useQuery({
+	const { data: playlists } = useQuery({
 		queryKey: ["popular-playlists"],
 		queryFn: ({ signal }) => searchPlaylists("top hits", { limit: 20 }, signal),
 		select: (data) => data.data.playlists.items,
@@ -39,14 +39,6 @@ export function Popular() {
 		},
 		[playlists, showAll],
 	);
-
-	if (!playlists || isLoading) {
-		return (
-			<View className="flex-1 items-center justify-center">
-				<View className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" />
-			</View>
-		);
-	}
 
 	if (!visible.length) return null;
 

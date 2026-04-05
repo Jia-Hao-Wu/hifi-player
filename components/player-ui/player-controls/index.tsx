@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { MarqueeText } from "@/components/ui/marquee-text";
+import { useFavorites } from "@/contexts/favorites-storage";
 import { usePlayer } from "@/contexts/player-context";
 import { ScrubberProvider, useScrubber } from "@/contexts/scrubber-context";
 import { formatTime } from "@/utils";
@@ -13,6 +15,7 @@ import { ProgressBar } from "./progress-bar";
 function PlayerControlsInner() {
 	const { currentTrack, duration } = usePlayer();
 	const { displayPosition } = useScrubber();
+	const { isFavorite, toggleFavorite } = useFavorites();
 	const router = useRouter();
 	const [showModal, setShowModal] = useState(false);
 
@@ -33,7 +36,7 @@ function PlayerControlsInner() {
 						className="text-sm font-semibold tracking-tight text-foreground"
 					/>
 					<View className="flex flex-row">
-						<Pressable onPress={() => router.push(`/artist/${currentTrack.artist.id}`)} className="px-3">
+						<Pressable onPress={() => router.push(`/artist/${currentTrack.artist.id}`)} className="pr-3">
 							<Text className="text-xs text-muted">{currentTrack.artist.name}</Text>
 						</Pressable>
 					</View>
@@ -42,6 +45,29 @@ function PlayerControlsInner() {
 				<Text className="text-[11px] text-muted">
 					{`${formatTime(displayPosition)} / ${formatTime(duration)}`}
 				</Text>
+
+				<Pressable
+					hitSlop={8}
+					onPress={() =>
+						toggleFavorite({
+							id: currentTrack.id,
+							type: "track",
+							title: currentTrack.title,
+							image: currentTrack.cover,
+							subtitle: currentTrack.artist.name,
+							tidalId: currentTrack.tidalId,
+							duration: currentTrack.duration,
+							artist: currentTrack.artist,
+							album: currentTrack.album,
+						})
+					}
+				>
+					<IconSymbol
+						name={isFavorite(currentTrack.id) ? "heart.fill" : "heart"}
+						size={18}
+						className={isFavorite(currentTrack.id) ? "text-red-500" : "text-muted"}
+					/>
+				</Pressable>
 
 				<PausePlayButton />
 			</Pressable>

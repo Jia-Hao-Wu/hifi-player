@@ -1,17 +1,27 @@
+import { useMemo } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 
 import { ARTWORK_SIZES, artworkUrl, getRecommendations } from "@/api";
 import { MediaCard } from "@/components/media-card";
 import { usePlayer } from "@/contexts/player-context";
+import { usePlaylistStorage } from "@/contexts/playlist-storage";
 
 export function Recommended() {
 	const { currentTrack, enQueue } = usePlayer();
+	const { playlists } = usePlaylistStorage();
+
+	const seedId = useMemo(() => {
+		if (currentTrack?.tidalId) return currentTrack.tidalId;
+		const allTracks = playlists.flatMap((p) => p.tracks).filter((t) => t.tidalId);
+		if (allTracks.length === 0) return null;
+		return allTracks[Math.floor(Math.random() * allTracks.length)].tidalId!;
+	}, [currentTrack?.tidalId, playlists]);
 
 	const { data: recommendations } = useQuery({
-		queryKey: ["recommendations", currentTrack?.tidalId],
-		queryFn: ({ signal }) => getRecommendations(currentTrack!.tidalId!, signal),
-		enabled: !!currentTrack?.tidalId,
+		queryKey: ["recommendations", seedId],
+		queryFn: ({ signal }) => getRecommendations(seedId!, signal),
+		enabled: !!seedId,
 		select: (data) => data.items,
 		staleTime: 5 * 60 * 1000,
 	});

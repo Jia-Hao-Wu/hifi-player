@@ -414,14 +414,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		} else {
 			playlist.next();
 		}
+		playlist.play();
 	}, [playlist, shuffled, status.currentIndex]);
 
 	const previous = useCallback(async () => {
 		if (playlist.currentTime > 3) {
 			await playlist.seekTo(0);
-			return;
+		} else {
+			playlist.previous();
 		}
-		playlist.previous();
+		playlist.play();
 	}, [playlist]);
 
 	const seek = useCallback(

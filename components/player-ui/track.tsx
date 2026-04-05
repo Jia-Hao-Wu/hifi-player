@@ -49,6 +49,7 @@ export function Track({ track, showImage = false, index, actions }: TrackProps) 
 				album: track.album?.title ?? "",
 				artwork,
 				tidalId: track.id,
+				cover: artwork,
 				duration: track.duration,
 			}
 		: track;
